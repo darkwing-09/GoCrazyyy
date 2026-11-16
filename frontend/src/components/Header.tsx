@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link, NavLink, useNavigate } from 'react-router-dom'
+import { NavLink, useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'motion/react'
 import { Search, X, Menu } from 'lucide-react'
 import clsx from 'clsx'
@@ -33,11 +33,11 @@ export function Header() {
           ))}
         </nav>
         <div className="ml-auto flex items-center gap-1 md:ml-2">
-          <button onClick={() => setSearchOpen(true)} aria-label="Search listings" className="flex size-9 items-center justify-center rounded-full text-ink-2 transition hover:bg-white/5 hover:text-ink">
+          <button onClick={() => setSearchOpen(true)} aria-label="Search listings" className="flex size-9 items-center justify-center rounded-full text-ink-2 transition hover:bg-accent-subtle hover:text-ink">
             <Search className="size-[18px]" strokeWidth={1.75} />
           </button>
           <PalettePicker />
-          <button onClick={() => setMenu(m => !m)} aria-label="Menu" aria-expanded={menu} className="flex size-9 items-center justify-center rounded-full text-ink-2 transition hover:bg-white/5 hover:text-ink md:hidden">
+          <button onClick={() => setMenu(m => !m)} aria-label="Menu" aria-expanded={menu} className="flex size-9 items-center justify-center rounded-full text-ink-2 transition hover:bg-accent-subtle hover:text-ink md:hidden">
             {menu ? <X className="size-[18px]" /> : <Menu className="size-[18px]" />}
           </button>
         </div>
@@ -57,6 +57,7 @@ export function Header() {
 }
 
 function LiveStrip({ online, today, url }: { online: number | null; today: number | null; url: string | null }) {
+  const datafastUrl = url ?? 'https://datafa.st'
   const Inner = (
     <span className="hidden items-center gap-2 text-[12px] text-ink-3 sm:inline-flex">
       <span className="relative flex size-2"><span className="absolute inline-flex size-full animate-ping rounded-full bg-accent opacity-60" /><span className="relative inline-flex size-2 rounded-full bg-accent" /></span>
@@ -65,7 +66,7 @@ function LiveStrip({ online, today, url }: { online: number | null; today: numbe
       <span>·</span><span className="underline decoration-line underline-offset-4">stats →</span>
     </span>
   )
-  return url ? <a href={url} target="_blank" rel="noreferrer" className="ml-2">{Inner}</a> : <Link to="/about#stats" className="ml-2">{Inner}</Link>
+  return <a href={datafastUrl} target="_blank" rel="noreferrer" className="ml-2">{Inner}</a>
 }
 
 function SearchOverlay({ open, onClose }: { open: boolean; onClose: () => void }) {
@@ -93,15 +94,15 @@ function SearchOverlay({ open, onClose }: { open: boolean; onClose: () => void }
             <div className="flex items-center gap-3 px-4">
               <Search className="size-4 text-ink-3" />
               <input ref={input} value={q} onChange={e => setQ(e.target.value)} placeholder="Search listings by name, domain or category" className="h-13 w-full bg-transparent text-[15px] outline-none placeholder:text-ink-3" />
-              <kbd className="rounded-md bg-white/5 px-1.5 py-0.5 font-mono text-[11px] text-ink-3">esc</kbd>
+              <kbd className="rounded-md bg-line-strong px-1.5 py-0.5 font-mono text-[11px] text-ink-3">esc</kbd>
             </div>
             {q.trim() && (
               <ul className="border-t border-line p-1.5">
                 {hits.length === 0 && <li className="px-3 py-6 text-center text-sm text-ink-3">{all === null ? 'Loading…' : `Nothing listed matches “${q}”. Be the first to claim it.`}</li>}
                 {hits.map(l => (
                   <li key={l.slug}>
-                    <button onClick={() => { onClose(); nav(`/product/${l.slug}`) }} className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition hover:bg-white/5">
-                      <img src={l.favicon ?? ''} alt="" className="size-7 rounded-lg bg-white/5 object-cover" />
+                    <button onClick={() => { onClose(); nav(`/product/${l.slug}`) }} className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition hover:bg-accent-subtle">
+                      <img src={l.favicon ?? ''} alt="" className="size-7 rounded-lg bg-line-strong object-cover" />
                       <span className="min-w-0 flex-1"><span className="block truncate text-sm">{l.title}</span><span className="block text-[12px] text-ink-3">#{l.rank} · {l.category.name}</span></span>
                       <span className="tnum font-mono text-[13px] text-accent">{rupees(l.total_paise)}</span>
                     </button>

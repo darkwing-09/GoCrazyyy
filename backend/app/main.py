@@ -6,7 +6,7 @@ from fastapi import FastAPI, Depends, HTTPException, Request, Header, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 from pydantic import BaseModel, Field
-from sqlalchemy import select, func
+from sqlalchemy import select, func, text
 from sqlalchemy.orm import Session, selectinload
 
 from .config import get_settings
@@ -27,6 +27,20 @@ PAGE_SIZE = 50
 @app.on_event("startup")
 def _startup():
     Base.metadata.create_all(engine)
+    # Ensure optional startup & contact detail columns exist on SQLite
+    with engine.connect() as conn:
+        for col, typ in [
+            ("twitter", "VARCHAR(80)"),
+            ("linkedin", "VARCHAR(250)"),
+            ("location", "VARCHAR(120)"),
+            ("stage", "VARCHAR(60)"),
+            ("contact_phone", "VARCHAR(50)"),
+        ]:
+            try:
+                conn.execute(text(f"ALTER TABLE listings ADD COLUMN {col} {typ}"))
+                conn.commit()
+            except Exception:
+                pass
     if settings.seed_demo:
         with SessionLocal() as db:
             seed(db)
@@ -48,6 +62,12 @@ def listing_out(r: boards.Row, board: str = "alltime", take_price: int | None = 
         "last_paid_at": r.last_paid_at.isoformat() if r.last_paid_at else None,
         "deal_text": l.deal_text, "coupon": l.coupon if board == "deals" else None,
         "take_price_paise": take_price,
+        "contact_email": l.contact_email,
+        "twitter": getattr(l, "twitter", None),
+        "linkedin": getattr(l, "linkedin", None),
+        "location": getattr(l, "location", None),
+        "stage": getattr(l, "stage", None),
+        "contact_phone": getattr(l, "contact_phone", None),
     }
 
 
@@ -205,7 +225,9 @@ async def stats(db: Session = Depends(get_db)):
     all_ov = await datafast.overview()
     products = db.execute(select(func.count(Listing.id)).where(Listing.published.is_(True))).scalar()
     ledger = db.execute(select(func.coalesce(func.sum(Payment.amount_paise), 0))).scalar()
+    demo = bool(db.execute(select(func.count(Listing.id)).where(Listing.is_demo.is_(True), Listing.published.is_(True))).scalar())
     return {
+        "demo": demo,
         "source": "datafast" if all_ov is not None else "unconfigured",
         "online": online, "visitors_today": (today_ov or {}).get("visitors"),
         "visitors_total": (all_ov or {}).get("visitors"),
@@ -246,6 +268,12 @@ class ClaimIn(BaseModel):
     email: str | None = Field(default=None, max_length=200)
     df_visitor_id: str | None = Field(default=None, max_length=80)
     accept_terms: bool
+    # Optional startup details & contacts
+    twitter: str | None = Field(default=None, max_length=80)
+    linkedin: str | None = Field(default=None, max_length=250)
+    location: str | None = Field(default=None, max_length=120)
+    stage: str | None = Field(default=None, max_length=60)
+    contact_phone: str | None = Field(default=None, max_length=50)
 
 
 @app.post("/api/claims")
@@ -275,15 +303,34 @@ async def create_claim(body: ClaimIn, db: Session = Depends(get_db)):
         listing_ = existing
         if body.board == "deals" and body.deal_text:
             listing_.deal_text, listing_.coupon = body.deal_text.strip(), (body.coupon or "").strip() or None
+        if body.twitter is not None:
+            listing_.twitter = body.twitter.strip() or None
+        if body.linkedin is not None:
+            listing_.linkedin = body.linkedin.strip() or None
+        if body.location is not None:
+            listing_.location = body.location.strip() or None
+        if body.stage is not None:
+            listing_.stage = body.stage.strip() or None
+        if body.contact_phone is not None:
+            listing_.contact_phone = body.contact_phone.strip() or None
+        if body.email:
+            listing_.contact_email = body.email.strip()
     else:
         base = meta_["handle"] or meta_["domain"].split(".")[0]
         slug = base.lower().replace(" ", "-")[:120]
         while db.execute(select(Listing).where(Listing.slug == slug)).scalar_one_or_none():
             slug = f"{base[:110]}-{secrets.token_hex(2)}"
-        listing_ = Listing(slug=slug, url=meta_["url"], domain=meta_["domain"], handle=meta_["handle"],
-                           title=meta_["title"], description=meta_["description"], favicon=meta_["favicon"],
-                           category_id=cat.id, contact_email=body.email, published=False,
-                           deal_text=(body.deal_text or "").strip() or None, coupon=(body.coupon or "").strip() or None)
+        listing_ = Listing(
+            slug=slug, url=meta_["url"], domain=meta_["domain"], handle=meta_["handle"],
+            title=meta_["title"], description=meta_["description"], favicon=meta_["favicon"],
+            category_id=cat.id, contact_email=body.email, published=False,
+            deal_text=(body.deal_text or "").strip() or None, coupon=(body.coupon or "").strip() or None,
+            twitter=(body.twitter or "").strip() or None,
+            linkedin=(body.linkedin or "").strip() or None,
+            location=(body.location or "").strip() or None,
+            stage=(body.stage or "").strip() or None,
+            contact_phone=(body.contact_phone or "").strip() or None,
+        )
         db.add(listing_)
         db.flush()
     notes = {"listing_id": str(listing_.id), "slug": listing_.slug, "board": body.board,

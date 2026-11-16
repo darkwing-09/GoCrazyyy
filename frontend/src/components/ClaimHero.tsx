@@ -1,0 +1,466 @@
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
+import { AnimatePresence, motion } from 'motion/react'
+import {
+  Minus,
+  Plus,
+  Globe,
+  ChevronDown,
+  ChevronUp,
+  Percent,
+  Ticket,
+  Loader2,
+  MapPin,
+  Rocket,
+  Phone,
+  Sparkles,
+  AtSign,
+} from 'lucide-react'
+import { LinkedInIcon } from './Icon'
+import clsx from 'clsx'
+import { Button } from './Button'
+import { CheckoutDialog, type CheckoutState } from './CheckoutDialog'
+import { api, type ClaimResult, type Quote } from '@/lib/api'
+import { useAppData } from '@/lib/app-data'
+import { useTheme } from '@/lib/theme'
+import { dataFastVisitorId } from '@/lib/datafast'
+import { openCheckout } from '@/lib/razorpay'
+import { rupeesPlain } from '@/lib/format'
+
+export type ClaimHeroHandle = { prefill: (o: { amountPaise?: number; url?: string }) => void }
+
+type Props = {
+  board: 'main' | 'deals'
+  category: string | null
+  takeTopPaise: number | null
+  onPaid: () => void
+  onAmountChange?: (paise: number | null) => void
+}
+
+export const ClaimHero = forwardRef<ClaimHeroHandle, Props>(function ClaimHero(
+  { board, category, takeTopPaise, onPaid, onAmountChange },
+  ref
+) {
+  const { categories, meta } = useAppData()
+  const { accent, reducedMotion } = useTheme()
+  const step = meta?.pricing.step ?? 1000
+  const [amount, setAmount] = useState<number | null>(null)
+  const [url, setUrl] = useState('')
+  const [cat, setCat] = useState<string>(category ?? '')
+  const [deal, setDeal] = useState('')
+  const [coupon, setCoupon] = useState('')
+  const [email, setEmail] = useState('')
+  const [terms, setTerms] = useState(false)
+  const [quote, setQuote] = useState<Quote | null>(null)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [checkout, setCheckout] = useState<CheckoutState | null>(null)
+  const [sweep, setSweep] = useState(0)
+
+  // Optional startup details & contacts
+  const [showDetails, setShowDetails] = useState(false)
+  const [location, setLocation] = useState('')
+  const [stage, setStage] = useState('')
+  const [twitter, setTwitter] = useState('')
+  const [linkedin, setLinkedin] = useState('')
+  const [contactPhone, setContactPhone] = useState('')
+
+  const urlRef = useRef<HTMLInputElement>(null)
+  const catName = categories.find((c) => c.slug === category)?.name
+
+  useEffect(() => {
+    if (takeTopPaise !== null && amount === null) setAmount(takeTopPaise)
+  }, [takeTopPaise]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    setCat(category ?? '')
+    setAmount(takeTopPaise)
+  }, [category, board]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useImperativeHandle(ref, () => ({
+    prefill: ({ amountPaise, url: u }) => {
+      if (amountPaise !== undefined) {
+        setAmount(amountPaise)
+        setSweep((s) => s + 1)
+      }
+      if (u) setUrl(u)
+      document.getElementById('claim')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      setTimeout(() => urlRef.current?.focus(), 400)
+    },
+  }))
+
+  useEffect(() => {
+    onAmountChange?.(amount)
+  }, [amount]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Live quote
+  useEffect(() => {
+    if (amount === null) return
+    const id = setTimeout(() => {
+      api
+        .quote({ amount_paise: amount, category: category ?? undefined, board, url: url.trim() || undefined })
+        .then(setQuote)
+        .catch(() => {})
+    }, 180)
+    return () => clearTimeout(id)
+  }, [amount, category, board, url])
+
+  const bump = (dir: 1 | -1) => {
+    setAmount((a) => Math.max(0, Math.min(meta?.pricing.max ?? 50_000_000, (a ?? 0) + dir * step)))
+    setSweep((s) => s + 1)
+  }
+
+  const min =
+    quote?.min_paise ??
+    (board === 'deals' ? meta?.pricing.min_new_deal ?? 4900 : meta?.pricing.min_new ?? 9900)
+  const valid =
+    !!url.trim() &&
+    !!cat &&
+    amount !== null &&
+    amount >= min &&
+    terms &&
+    (board !== 'deals' || deal.trim().length > 0)
+
+  const submit = async () => {
+    if (!valid || amount === null) return
+    setBusy(true)
+    setError(null)
+    try {
+      const claim: ClaimResult = await api.claim({
+        url: url.trim(),
+        category: cat,
+        amount_paise: amount,
+        board,
+        accept_terms: true,
+        deal_text: board === 'deals' ? deal.trim() : null,
+        coupon: board === 'deals' ? coupon.trim() || null : null,
+        email: email.trim() || null,
+        df_visitor_id: dataFastVisitorId(),
+        location: location.trim() || null,
+        stage: stage.trim() || null,
+        twitter: twitter.trim() || null,
+        linkedin: linkedin.trim() || null,
+        contact_phone: contactPhone.trim() || null,
+      })
+      if (claim.mode === 'razorpay' && claim.key_id) {
+        setCheckout({ kind: 'waiting', claim })
+        await openCheckout({
+          keyId: claim.key_id,
+          orderId: claim.order_id,
+          amountPaise: claim.amount_paise,
+          title: claim.listing.title,
+          description: `Rank for ${claim.listing.domain} on GoCrazy`,
+          accentHex: accent.hex,
+          email: email.trim() || undefined,
+          onDismiss: () => setCheckout(null),
+          onSuccess: async (r) => {
+            setCheckout({ kind: 'verifying', claim })
+            try {
+              const res = await api.verify(r)
+              setCheckout({ kind: 'done', claim, result: res })
+              onPaid()
+            } catch (e) {
+              setCheckout({ kind: 'error', claim, message: (e as Error).message })
+            }
+          },
+        })
+      } else {
+        setCheckout({ kind: 'mock', claim })
+      }
+    } catch (e) {
+      setError((e as Error).message)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const mockPay = async (claim: ClaimResult) => {
+    setCheckout({ kind: 'verifying', claim })
+    try {
+      const res = await api.mockPay(claim.order_id)
+      setCheckout({ kind: 'done', claim, result: res })
+      onPaid()
+    } catch (e) {
+      setCheckout({ kind: 'error', claim, message: (e as Error).message })
+    }
+  }
+
+  const rank = quote?.rank ?? 1
+  const where = catName ? ` in ${catName}` : ''
+  const on = board === 'deals' ? ' on Deals' : ''
+
+  return (
+    <section id="claim" className="scroll-mt-24 pt-10 pb-4">
+      {/* Hero Stepper Headline */}
+      <h1 className="display balance text-center text-[2.2rem] leading-[1.08] font-bold tracking-tight sm:text-[2.9rem] md:text-[3.5rem]">
+        Claim{' '}
+        <AnimatePresence mode="popLayout" initial={false}>
+          <motion.span
+            key={rank}
+            initial={reducedMotion ? false : { opacity: 0, y: 12, filter: 'blur(6px)' }}
+            animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+            exit={reducedMotion ? undefined : { opacity: 0, y: -12, filter: 'blur(6px)' }}
+            transition={{ duration: 0.3 }}
+            className="tnum inline-block text-accent drop-shadow-[0_0_20px_var(--accent)]"
+          >
+            #{rank}
+          </motion.span>
+        </AnimatePresence>
+        {where}
+        {on} for{' '}
+        <span className="inline-flex items-center gap-2.5 align-baseline whitespace-nowrap">
+          <motion.button
+            type="button"
+            whileTap={{ scale: 0.92 }}
+            onClick={() => bump(-1)}
+            aria-label={`Decrease by ₹${step / 100}`}
+            className="inline-flex size-7.5 items-center justify-center rounded-full border border-accent/30 bg-accent-subtle text-accent transition hover:bg-accent hover:text-accent-ink hover:shadow-[var(--accent-glow)] cursor-pointer sm:size-9"
+          >
+            <Minus className="size-4" strokeWidth={2.5} />
+          </motion.button>
+
+          <span
+            className="sweep rounded-2xl px-2 py-0.5 text-accent border border-accent/25 bg-accent-subtle shadow-[0_0_24px_-4px_var(--accent-subtle)]"
+            data-sweep={sweep ? '1' : '0'}
+            key={sweep}
+          >
+            <span className="tnum font-mono font-bold tracking-tight text-[1.05em]">
+              ₹{amount !== null ? rupeesPlain(amount) : '—'}
+            </span>
+          </span>
+
+          <motion.button
+            type="button"
+            whileTap={{ scale: 0.92 }}
+            onClick={() => bump(1)}
+            aria-label={`Increase by ₹${step / 100}`}
+            className="inline-flex size-7.5 items-center justify-center rounded-full border border-accent/30 bg-accent-subtle text-accent transition hover:bg-accent hover:text-accent-ink hover:shadow-[var(--accent-glow)] cursor-pointer sm:size-9"
+          >
+            <Plus className="size-4" strokeWidth={2.5} />
+          </motion.button>
+        </span>
+      </h1>
+
+      {/* Form Card */}
+      <form onSubmit={(e) => { e.preventDefault(); submit() }} className="mx-auto mt-7 max-w-2xl">
+        <div className="flex flex-col gap-2.5 sm:flex-row">
+          <label className="relative flex-1">
+            <Globe className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-ink-3" />
+            <input
+              ref={urlRef}
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              placeholder="Your startup URL or @handle"
+              aria-label="Startup URL or handle"
+              inputMode="url"
+              autoComplete="url"
+              className="h-12 w-full rounded-full bg-surface/80 backdrop-blur-md pr-4 pl-10 text-[14.5px] hairline placeholder:text-ink-3 transition duration-200 outline-none focus:border-accent/40 focus:ring-1 focus:ring-accent"
+            />
+          </label>
+          <label className="relative sm:w-56">
+            <select
+              value={cat}
+              onChange={(e) => setCat(e.target.value)}
+              aria-label="Category"
+              className={clsx(
+                'h-12 w-full appearance-none rounded-full bg-surface/80 backdrop-blur-md pr-9 pl-4 text-[14px] hairline outline-none transition duration-200 focus:border-accent/40 focus:ring-1 focus:ring-accent cursor-pointer',
+                !cat && 'text-ink-3'
+              )}
+            >
+              <option value="" disabled>Choose a category</option>
+              {categories.map((c) => (
+                <option key={c.slug} value={c.slug}>{c.name}</option>
+              ))}
+            </select>
+            <ChevronDown className="pointer-events-none absolute top-1/2 right-3.5 size-4 -translate-y-1/2 text-ink-3" />
+          </label>
+          <Button
+            type="submit"
+            size="lg"
+            sweep
+            disabled={!valid || busy}
+            className="sm:w-38"
+            data-sweep={valid ? '1' : '0'}
+          >
+            {busy ? <Loader2 className="size-4.5 animate-spin" /> : 'Claim rank'}
+          </Button>
+        </div>
+
+        {board === 'deals' && (
+          <div className="mt-2.5 flex flex-col gap-2 sm:flex-row">
+            <label className="relative flex-1">
+              <Percent className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-ink-3" />
+              <input
+                value={deal}
+                maxLength={100}
+                onChange={(e) => setDeal(e.target.value)}
+                placeholder="Describe your discount, e.g. 50% off for 6 months"
+                aria-label="Discount"
+                className="h-12 w-full rounded-full bg-surface/80 backdrop-blur-md pr-14 pl-10 text-[14.5px] hairline placeholder:text-ink-3 outline-none focus:border-accent/40 focus:ring-1 focus:ring-accent"
+              />
+              <span className="tnum absolute top-1/2 right-4 -translate-y-1/2 font-mono text-[11px] text-ink-3">
+                {deal.length}/100
+              </span>
+            </label>
+            <label className="relative sm:w-56">
+              <Ticket className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-ink-3" />
+              <input
+                value={coupon}
+                maxLength={60}
+                onChange={(e) => setCoupon(e.target.value)}
+                placeholder="Coupon code"
+                aria-label="Coupon code"
+                className="h-12 w-full rounded-full bg-surface/80 backdrop-blur-md pr-4 pl-10 text-[14.5px] hairline placeholder:text-ink-3 outline-none focus:border-accent/40 focus:ring-1 focus:ring-accent"
+              />
+            </label>
+          </div>
+        )}
+
+        {/* Expandable Startup Details & Contacts Section */}
+        <div className="mt-3 text-center sm:text-left">
+          <button
+            type="button"
+            onClick={() => setShowDetails((s) => !s)}
+            className="inline-flex items-center gap-1.5 text-[12.5px] font-medium text-ink-3 transition-colors hover:text-accent cursor-pointer"
+          >
+            <Sparkles className="size-3.5 text-accent" />
+            <span>{showDetails ? 'Hide startup details & contacts' : '+ Add startup details & contacts (optional)'}</span>
+            {showDetails ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
+          </button>
+
+          <AnimatePresence>
+            {showDetails && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                className="overflow-hidden pt-3"
+              >
+                <div className="rounded-3xl bg-surface/80 p-4 border border-line backdrop-blur-md space-y-2.5">
+                  <p className="text-[12px] text-ink-3 mb-1">
+                    Help prospective customers and investors reach you directly through your GoCrazy listing:
+                  </p>
+
+                  <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+                    <label className="relative">
+                      <MapPin className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-ink-3" />
+                      <input
+                        value={location}
+                        onChange={(e) => setLocation(e.target.value)}
+                        placeholder="HQ / City (e.g. Bengaluru, Remote)"
+                        aria-label="Location"
+                        className="h-10 w-full rounded-full bg-raised/80 pr-3 pl-9 text-[13px] hairline placeholder:text-ink-3 outline-none focus:border-accent/40"
+                      />
+                    </label>
+
+                    <label className="relative">
+                      <Rocket className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-ink-3" />
+                      <input
+                        value={stage}
+                        onChange={(e) => setStage(e.target.value)}
+                        placeholder="Stage (e.g. Bootstrapped, Seed, Series A)"
+                        aria-label="Startup Stage"
+                        className="h-10 w-full rounded-full bg-raised/80 pr-3 pl-9 text-[13px] hairline placeholder:text-ink-3 outline-none focus:border-accent/40"
+                      />
+                    </label>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
+                    <label className="relative">
+                      <AtSign className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-ink-3" />
+                      <input
+                        value={twitter}
+                        onChange={(e) => setTwitter(e.target.value)}
+                        placeholder="Twitter / X (@handle)"
+                        aria-label="Twitter handle"
+                        className="h-10 w-full rounded-full bg-raised/80 pr-3 pl-9 text-[13px] hairline placeholder:text-ink-3 outline-none focus:border-accent/40"
+                      />
+                    </label>
+
+                    <label className="relative">
+                      <LinkedInIcon className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-ink-3" />
+                      <input
+                        value={linkedin}
+                        onChange={(e) => setLinkedin(e.target.value)}
+                        placeholder="LinkedIn (profile / page)"
+                        aria-label="LinkedIn profile"
+                        className="h-10 w-full rounded-full bg-raised/80 pr-3 pl-9 text-[13px] hairline placeholder:text-ink-3 outline-none focus:border-accent/40"
+                      />
+                    </label>
+
+                    <label className="relative">
+                      <Phone className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-ink-3" />
+                      <input
+                        value={contactPhone}
+                        onChange={(e) => setContactPhone(e.target.value)}
+                        placeholder="WhatsApp / Inquiries phone"
+                        aria-label="Phone or WhatsApp"
+                        className="h-10 w-full rounded-full bg-raised/80 pr-3 pl-9 text-[13px] hairline placeholder:text-ink-3 outline-none focus:border-accent/40"
+                      />
+                    </label>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        <div className="mt-3.5 flex flex-col items-center justify-between gap-2.5 text-[12.5px] text-ink-3 sm:flex-row">
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={terms}
+              onChange={(e) => setTerms(e.target.checked)}
+              className="size-4 accent-accent cursor-pointer rounded"
+            />
+            <span>
+              I accept the{' '}
+              <Link to="/terms" className="text-ink-2 underline underline-offset-4 hover:text-accent">
+                Terms
+              </Link>
+              . Paid placement, rank is bought.
+            </span>
+          </label>
+          <input
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            type="email"
+            placeholder="Receipt & lead inquiries email"
+            aria-label="Email"
+            className="h-8.5 w-full rounded-full bg-surface/80 backdrop-blur-md px-3 text-[12.5px] hairline placeholder:text-ink-3 outline-none focus:border-accent/40 sm:w-64"
+          />
+        </div>
+
+        {/* Dynamic quote status */}
+        <div className="mt-3 min-h-5 text-center text-[13px]" aria-live="polite">
+          {error ? (
+            <span className="text-[#ff5c5c] font-medium">{error}</span>
+          ) : (
+            quote &&
+            amount !== null && (
+              amount < quote.min_paise ? (
+                <span className="text-ink-3">
+                  Minimum is ₹{rupeesPlain(quote.min_paise)}
+                  {quote.existing ? ` to raise ${quote.existing.title}` : ' for a new listing'}.
+                </span>
+              ) : quote.existing ? (
+                <span className="text-ink-2">
+                  Raises <span className="text-ink font-semibold">{quote.existing.title}</span> from #{quote.existing.current_rank ?? '—'} to{' '}
+                  <span className="text-accent font-semibold">#{quote.rank}</span> (total ₹{rupeesPlain(quote.projected_total_paise)}).
+                </span>
+              ) : (
+                <span className="text-ink-2">
+                  ₹{rupeesPlain(amount)} lands you at <span className="text-accent font-semibold">#{quote.rank}</span>
+                  {where}. Ranks add up: pay again anytime to climb.
+                </span>
+              )
+            )
+          )}
+        </div>
+      </form>
+
+      <CheckoutDialog state={checkout} onClose={() => setCheckout(null)} onMockPay={mockPay} />
+    </section>
+  )
+})

@@ -2,8 +2,8 @@
 
 @theme {
   --font-display: "Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif;
-  --font-sans: "Geist", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --font-sans: "Schibsted Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Spline Sans Mono", ui-monospace, "SF Mono", Menlo, monospace;
   --color-bg: var(--bg);
   --color-surface: var(--surface);
   --color-raised: var(--raised);
@@ -13,36 +13,78 @@
   --color-ink-2: var(--ink-2);
   --color-ink-3: var(--ink-3);
   --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-active: var(--accent-active);
   --color-accent-ink: var(--accent-ink);
+  --color-accent-subtle: var(--accent-subtle);
+  --color-accent-muted: var(--accent-muted);
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-:root {
-  /* Ground. Near-black, slightly cool. */
-  --bg: #09090b;
-  --surface: #0e0e11;
-  --raised: #141418;
-  --line: rgb(255 255 255 / 0.08);
+/* ─── DARK CYBER MODE (Futuristic Neon Void) ─── */
+:root, :root.dark {
+  --bg: #07070a;
+  --surface: #0e0e13;
+  --raised: #14141c;
+  --line: rgb(255 255 255 / 0.07);
   --line-strong: rgb(255 255 255 / 0.14);
-  --ink: #ededf0;
-  --ink-2: #a6a6b0;
-  --ink-3: #6f6f7a;
-  /* Accent is set by the palette picker; mint by default. */
-  --accent-h: 160;
-  --accent-c: 0.19;
-  --accent-l: 0.87;
-  --accent: oklch(var(--accent-l) var(--accent-c) var(--accent-h));
-  --accent-ink: #09090b;
-  --accent-12: oklch(var(--accent-l) var(--accent-c) var(--accent-h) / 0.12);
-  --accent-20: oklch(var(--accent-l) var(--accent-c) var(--accent-h) / 0.2);
-  --accent-40: oklch(var(--accent-l) var(--accent-c) var(--accent-h) / 0.4);
-  --accent-glow: 0 8px 40px -8px oklch(var(--accent-l) var(--accent-c) var(--accent-h) / 0.55);
+
+  --ink: #f4f4f7;
+  --ink-2: #a1a1aa;
+  --ink-3: #71717a;
+
+  /* Dedicated Theme: #38bdf8 (Cyber Sky Blue) */
+  --accent: #38bdf8;
+  --accent-hover: #7dd3fc;
+  --accent-active: #0284c7;
+  --accent-ink: #041419;
+  --accent-subtle: rgba(56, 189, 248, 0.08);
+  --accent-muted: rgba(56, 189, 248, 0.18);
+  --accent-12: var(--accent-subtle);
+  --accent-20: var(--accent-muted);
+  --accent-40: rgba(56, 189, 248, 0.35);
+  --accent-glow: 0 8px 36px -4px rgba(56, 189, 248, 0.55);
+
   color-scheme: dark;
 }
 
-html { background: var(--bg); }
-body {
+/* ─── LIGHT MODE (High-Contrast Sky & Slate) ─── */
+:root.light {
+  --bg: #f8fafc;
+  --surface: #f1f5f9;
+  --raised: #e2e8f0;
+  --line: rgb(15 23 42 / 0.08);
+  --line-strong: rgb(15 23 42 / 0.16);
+
+  --ink: #0f172a;
+  --ink-2: #475569;
+  --ink-3: #64748b;
+
+  --accent: #38bdf8;
+  --accent-hover: #7dd3fc;
+  --accent-active: #0284c7;
+  --accent-ink: #041419;
+  --accent-subtle: rgba(56, 189, 248, 0.08);
+  --accent-muted: rgba(56, 189, 248, 0.18);
+  --accent-12: var(--accent-subtle);
+  --accent-20: var(--accent-muted);
+  --accent-40: rgba(56, 189, 248, 0.35);
+  --accent-glow: 0 8px 36px -4px rgba(56, 189, 248, 0.45);
+  color-scheme: light;
+}
+
+html {
   background: var(--bg);
+  scroll-behavior: smooth;
+}
+
+#root {
+  isolation: isolate;
+  min-height: 100vh;
+}
+
+body {
+  background: transparent;
   color: var(--ink);
   font-family: var(--font-sans);
   font-feature-settings: "ss01", "cv11";
@@ -51,42 +93,170 @@ body {
   overflow-x: hidden;
 }
 
-/* Browser surfaces carry the design too. */
-::selection { background: var(--accent-40); color: var(--ink); }
-input, textarea { caret-color: var(--accent); }
-* { scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent; }
-::-webkit-scrollbar { width: 10px; height: 10px; }
-::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: 999px; border: 3px solid var(--bg); }
-::-webkit-scrollbar-track { background: transparent; }
-:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 6px; }
-a { text-underline-offset: 3px; }
-.tnum { font-variant-numeric: tabular-nums; }
-.display { font-family: var(--font-display); letter-spacing: -0.03em; font-variation-settings: "opsz" 96; }
-.balance { text-wrap: balance; }
+/* Browser selections & inputs */
+::selection {
+  background: var(--accent-muted);
+  color: var(--ink);
+}
 
-/* Hairline that reads as light, not as a border. */
-.hairline { box-shadow: inset 0 0 0 1px var(--line); }
-.hairline-strong { box-shadow: inset 0 0 0 1px var(--line-strong); }
+input, textarea {
+  caret-color: var(--accent);
+}
 
-/* Light sweep used by the stepper and the claim button. */
-@keyframes sweep { from { transform: translateX(-120%) skewX(-20deg); } to { transform: translateX(220%) skewX(-20deg); } }
-.sweep { position: relative; overflow: hidden; }
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--line-strong);
+  border-radius: 999px;
+  border: 2px solid var(--bg);
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 8px;
+}
+
+a {
+  text-underline-offset: 3px;
+}
+
+.tnum {
+  font-variant-numeric: tabular-nums;
+}
+
+.display {
+  font-family: var(--font-display);
+  letter-spacing: -0.035em;
+  font-variation-settings: "opsz" 96;
+}
+
+.balance {
+  text-wrap: balance;
+}
+
+/* Glassmorphism surfaces */
+.glass-panel {
+  background: color-mix(in srgb, var(--surface) 80%, transparent);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--line);
+}
+
+.glass-panel-raised {
+  background: color-mix(in srgb, var(--raised) 85%, transparent);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--line-strong);
+}
+
+/* Hairline borders */
+.hairline {
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+
+.hairline-strong {
+  box-shadow: inset 0 0 0 1px var(--line-strong);
+}
+
+/* Light sweep used on cards, button and stepper */
+@keyframes sweep {
+  from { transform: translateX(-130%) skewX(-20deg); }
+  to { transform: translateX(230%) skewX(-20deg); }
+}
+
+.sweep {
+  position: relative;
+  overflow: hidden;
+}
+
 .sweep::after {
-  content: ""; position: absolute; inset: 0; width: 40%; pointer-events: none;
-  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.35), transparent);
-  transform: translateX(-120%) skewX(-20deg); opacity: 0;
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: 45%;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.45), transparent);
+  transform: translateX(-130%) skewX(-20deg);
+  opacity: 0;
 }
-.sweep[data-sweep="1"]::after { animation: sweep 700ms var(--ease-out-expo) 1; opacity: 1; }
 
-/* Beam under the active nav / chip. */
-.beam { position: relative; }
+.sweep[data-sweep="1"]::after {
+  animation: sweep 750ms var(--ease-out-expo) 1;
+  opacity: 1;
+}
+
+/* Aceternity-inspired Border Beam Effect */
+@keyframes border-beam {
+  0% { offset-distance: 0%; }
+  100% { offset-distance: 100%; }
+}
+
+/* Active beam under navigation tabs */
+.beam {
+  position: relative;
+}
+
 .beam::after {
-  content: ""; position: absolute; left: 10%; right: 10%; bottom: -1px; height: 1px;
+  content: "";
+  position: absolute;
+  left: 12%;
+  right: 12%;
+  bottom: -1px;
+  height: 2px;
+  border-radius: 999px;
   background: linear-gradient(90deg, transparent, var(--accent), transparent);
-  box-shadow: 0 0 12px 1px var(--accent-40);
+  box-shadow: 0 2px 14px 0 var(--accent);
 }
 
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+/* Spotlight radial gradient on cards */
+.spot {
+  position: relative;
 }
-html { scroll-behavior: smooth; }
+
+.spot::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(300px circle at var(--mx, 50%) var(--my, 50%), var(--accent-subtle), transparent 75%);
+  transition: opacity 300ms var(--ease-out-expo);
+}
+
+.spot:hover::before {
+  opacity: 1;
+}
+
+/* Glow aura utilities */
+.neon-glow {
+  box-shadow: var(--accent-glow);
+}
+
+.neon-border {
+  border-color: var(--accent);
+  box-shadow: 0 0 16px -2px var(--accent-subtle);
+}
+
+/* Accessible reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -1,122 +1,72 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+import { useEffect } from 'react'
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
+import { AnimatePresence } from 'motion/react'
+import { ThemeProvider } from '@/lib/theme'
+import { AppDataProvider } from '@/lib/app-data'
+import { Background } from '@/components/Background'
+import { Header } from '@/components/Header'
+import { Footer } from '@/components/Footer'
+import { Home } from '@/pages/Home'
+import { Categories } from '@/pages/Categories'
+import { Product } from '@/pages/Product'
+import { Daily, DailyDay } from '@/pages/Daily'
+import { About } from '@/pages/About'
+import { Rules, FAQ, Terms, Refunds, Privacy, Contact } from '@/pages/Legal'
+import { NotFound } from '@/pages/NotFound'
 
-function App() {
-  const [count, setCount] = useState(0)
+function ScrollToTop() {
+  const { pathname, hash } = useLocation()
+  useEffect(() => {
+    if (hash) { document.querySelector(hash)?.scrollIntoView({ behavior: 'smooth' }); return }
+    window.scrollTo({ top: 0 })
+  }, [pathname, hash])
+  return null
+}
 
+function Pages() {
+  const location = useLocation()
+  // Keep the board family on one key so switching tabs/categories animates the content, not the whole page.
+  const key = location.pathname.startsWith('/category') || ['/', '/today', '/deals'].includes(location.pathname) ? 'board' : location.pathname
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+    <AnimatePresence mode="wait" initial={false}>
+      <Routes location={location} key={key}>
+        <Route path="/" element={<Home tab="alltime" />} />
+        <Route path="/today" element={<Home tab="today" />} />
+        <Route path="/deals" element={<Home tab="deals" />} />
+        <Route path="/category/:slug" element={<Home tab="alltime" />} />
+        <Route path="/category/:slug/today" element={<Home tab="today" />} />
+        <Route path="/category/:slug/deals" element={<Home tab="deals" />} />
+        <Route path="/categories" element={<Categories />} />
+        <Route path="/product/:slug" element={<Product />} />
+        <Route path="/daily" element={<Daily />} />
+        <Route path="/daily/:day" element={<DailyDay />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/rules" element={<Rules />} />
+        <Route path="/faq" element={<FAQ />} />
+        <Route path="/terms" element={<Terms />} />
+        <Route path="/refunds" element={<Refunds />} />
+        <Route path="/privacy" element={<Privacy />} />
+        <Route path="/contact" element={<Contact />} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </AnimatePresence>
   )
 }
 
-export default App
+export default function App() {
+  return (
+    <ThemeProvider>
+      <AppDataProvider>
+        <BrowserRouter>
+          <ScrollToTop />
+          <Background />
+          <div className="flex min-h-dvh flex-col">
+            <Header />
+            <Pages />
+            <Footer />
+          </div>
+        </BrowserRouter>
+      </AppDataProvider>
+    </ThemeProvider>
+  )
+}

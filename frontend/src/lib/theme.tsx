@@ -1,35 +1,111 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 
-export type Accent = { id: string; name: string; h: number; c: number; l: number; hex: string }
-export const ACCENTS: Accent[] = [
-  { id: 'mint', name: 'Mint', h: 160, c: 0.19, l: 0.87, hex: '#5cf2b0' },
-  { id: 'cyan', name: 'Cyan', h: 215, c: 0.15, l: 0.85, hex: '#5fd8ff' },
-  { id: 'violet', name: 'Violet', h: 300, c: 0.2, l: 0.74, hex: '#b78bff' },
-  { id: 'magenta', name: 'Magenta', h: 350, c: 0.22, l: 0.74, hex: '#ff6fb3' },
-  { id: 'lime', name: 'Lime', h: 125, c: 0.22, l: 0.9, hex: '#c6f55a' },
-  { id: 'ember', name: 'Ember', h: 35, c: 0.19, l: 0.8, hex: '#ffac5f' },
-]
+export type Mode = 'dark' | 'light'
 
-type Ctx = { accent: Accent; setAccent: (id: string) => void; reducedMotion: boolean }
-const ThemeCtx = createContext<Ctx>({ accent: ACCENTS[0], setAccent: () => {}, reducedMotion: false })
+export type ThemeAccent = {
+  id: string
+  name: string
+  hex: string
+  hoverHex: string
+  activeHex: string
+  ink: string
+  glow: string
+  glowSubtle: string
+  subtle: string
+  muted: string
+}
 
-function readStored(): string {
-  try { return localStorage.getItem('gc-accent') ?? 'mint' } catch { return 'mint' }
+// Single Dedicated Color Theme: #38bdf8 (Cyber Sky Blue)
+export const THEME_COLOR: ThemeAccent = {
+  id: 'cyber-sky',
+  name: 'Cyber Sky',
+  hex: '#38bdf8',
+  hoverHex: '#7dd3fc',
+  activeHex: '#0284c7',
+  ink: '#041419',
+  glow: 'rgba(56, 189, 248, 0.55)',
+  glowSubtle: 'rgba(56, 189, 248, 0.15)',
+  subtle: 'rgba(56, 189, 248, 0.08)',
+  muted: 'rgba(56, 189, 248, 0.18)',
+}
+
+type ThemeContextType = {
+  mode: Mode
+  setMode: (m: Mode) => void
+  accent: ThemeAccent
+  reducedMotion: boolean
+}
+
+const ThemeContext = createContext<ThemeContextType>({
+  mode: 'dark',
+  setMode: () => {},
+  accent: THEME_COLOR,
+  reducedMotion: false,
+})
+
+function readStoredMode(): Mode {
+  try {
+    return (localStorage.getItem('gc-mode') as Mode) ?? 'dark'
+  } catch {
+    return 'dark'
+  }
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [id, setId] = useState(readStored)
-  const [reducedMotion, setRM] = useState(() => typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches)
-  const accent = useMemo(() => ACCENTS.find(a => a.id === id) ?? ACCENTS[0], [id])
+  const [mode, setModeRaw] = useState<Mode>(readStoredMode)
+  const [reducedMotion, setRM] = useState(
+    () => typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches
+  )
+
+  // Dedicated #38bdf8 Cyber Sky theme everywhere
+  const accent: ThemeAccent = useMemo(() => {
+    const isDark = mode === 'dark'
+    return {
+      id: 'cyber-sky',
+      name: 'Cyber Sky (#38bdf8)',
+      hex: '#38bdf8',
+      hoverHex: '#7dd3fc',
+      activeHex: '#0284c7',
+      ink: '#041419',
+      glow: isDark ? 'rgba(56, 189, 248, 0.55)' : 'rgba(56, 189, 248, 0.35)',
+      glowSubtle: isDark ? 'rgba(56, 189, 248, 0.15)' : 'rgba(56, 189, 248, 0.12)',
+      subtle: isDark ? 'rgba(56, 189, 248, 0.08)' : 'rgba(56, 189, 248, 0.08)',
+      muted: isDark ? 'rgba(56, 189, 248, 0.18)' : 'rgba(56, 189, 248, 0.16)',
+    }
+  }, [mode])
+
+  const setMode = (m: Mode) => setModeRaw(m)
 
   useEffect(() => {
-    const r = document.documentElement.style
-    r.setProperty('--accent-h', String(accent.h))
-    r.setProperty('--accent-c', String(accent.c))
-    r.setProperty('--accent-l', String(accent.l))
-    document.querySelector('meta[name=theme-color]')?.setAttribute('content', '#09090b')
-    try { localStorage.setItem('gc-accent', accent.id) } catch { /* private mode */ }
-  }, [accent])
+    const root = document.documentElement
+    root.classList.remove('dark', 'light')
+    root.classList.add(mode)
+    root.setAttribute('data-theme', mode)
+
+    const r = root.style
+    r.setProperty('--accent', accent.hex)
+    r.setProperty('--accent-hover', accent.hoverHex)
+    r.setProperty('--accent-active', accent.activeHex)
+    r.setProperty('--accent-ink', accent.ink)
+    r.setProperty('--accent-glow', `0 8px 36px -4px ${accent.glow}`)
+    r.setProperty('--accent-glow-subtle', `0 0 24px ${accent.glowSubtle}`)
+    r.setProperty('--accent-subtle', accent.subtle)
+    r.setProperty('--accent-muted', accent.muted)
+
+    // Legacy variables
+    r.setProperty('--accent-12', accent.subtle)
+    r.setProperty('--accent-20', accent.muted)
+    r.setProperty('--accent-40', accent.glowSubtle)
+
+    document.querySelector('meta[name=theme-color]')?.setAttribute('content', mode === 'dark' ? '#07070a' : '#f8fafc')
+
+    try {
+      localStorage.setItem('gc-mode', mode)
+      localStorage.setItem('gc-accent', '#38bdf8')
+    } catch {
+      /* private mode */
+    }
+  }, [mode, accent])
 
   useEffect(() => {
     const mq = matchMedia('(prefers-reduced-motion: reduce)')
@@ -38,8 +114,17 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     return () => mq.removeEventListener('change', on)
   }, [])
 
-  const value = useMemo(() => ({ accent, setAccent: setId, reducedMotion }), [accent, reducedMotion])
-  return <ThemeCtx.Provider value={value}>{children}</ThemeCtx.Provider>
+  const value = useMemo(
+    () => ({
+      mode,
+      setMode,
+      accent,
+      reducedMotion,
+    }),
+    [mode, accent, reducedMotion]
+  )
+
+  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
 }
 
-export const useTheme = () => useContext(ThemeCtx)
+export const useTheme = () => useContext(ThemeContext)

@@ -1,51 +1,40 @@
-import { useState } from 'react'
-import { AnimatePresence, motion } from 'motion/react'
-import { Palette, Check } from 'lucide-react'
-import { ACCENTS, useTheme } from '@/lib/theme'
+import { Sun, Moon } from 'lucide-react'
+import { motion } from 'motion/react'
+import { useTheme } from '@/lib/theme'
 
 export function PalettePicker() {
-  const { accent, setAccent } = useTheme()
-  const [open, setOpen] = useState(false)
+  const { mode, setMode } = useTheme()
+
+  const toggle = () => {
+    setMode(mode === 'dark' ? 'light' : 'dark')
+  }
+
   return (
-    <div className="relative">
-      <button
-        type="button"
-        onClick={() => setOpen(o => !o)}
-        aria-expanded={open}
-        aria-label="Choose accent colour"
-        className="flex size-9 items-center justify-center rounded-full text-ink-2 transition hover:bg-white/5 hover:text-ink"
+    <button
+      type="button"
+      onClick={toggle}
+      aria-label={`Switch to ${mode === 'dark' ? 'light' : 'dark'} mode`}
+      title={`Theme: #38bdf8 · Switch to ${mode === 'dark' ? 'light' : 'dark'} mode`}
+      className="group relative flex size-9 items-center justify-center rounded-full text-ink-2 transition hover:bg-accent-subtle hover:text-ink cursor-pointer outline-none"
+    >
+      <motion.div
+        key={mode}
+        initial={{ rotate: -30, opacity: 0, scale: 0.8 }}
+        animate={{ rotate: 0, opacity: 1, scale: 1 }}
+        exit={{ rotate: 30, opacity: 0, scale: 0.8 }}
+        transition={{ duration: 0.25 }}
       >
-        <Palette className="size-[18px]" strokeWidth={1.75} />
-        <span className="absolute right-1.5 bottom-1.5 size-2 rounded-full bg-accent shadow-[0_0_8px_var(--accent)]" />
-      </button>
-      <AnimatePresence>
-        {open && (
-          <>
-            <button aria-label="Close" className="fixed inset-0 z-30 cursor-default" onClick={() => setOpen(false)} />
-            <motion.div
-              role="listbox" aria-label="Accent colours"
-              initial={{ opacity: 0, y: -6, filter: 'blur(6px)' }} animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }} exit={{ opacity: 0, y: -6, filter: 'blur(6px)' }}
-              transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
-              className="absolute right-0 z-40 mt-2 w-56 rounded-2xl bg-raised p-2 shadow-[0_20px_60px_-20px_rgb(0_0_0/0.8)] hairline-strong"
-            >
-              <p className="px-2 pt-1 pb-2 text-[11px] font-medium tracking-wide text-ink-3 uppercase">Accent</p>
-              <div className="grid grid-cols-6 gap-1.5 px-1 pb-1">
-                {ACCENTS.map(a => (
-                  <button
-                    key={a.id} role="option" aria-selected={a.id === accent.id} title={a.name}
-                    onClick={() => { setAccent(a.id); setOpen(false) }}
-                    className="group relative flex aspect-square items-center justify-center rounded-full transition hover:scale-110"
-                    style={{ background: a.hex, boxShadow: a.id === accent.id ? `0 0 0 2px var(--bg), 0 0 0 3.5px ${a.hex}, 0 6px 20px -6px ${a.hex}` : undefined }}
-                  >
-                    {a.id === accent.id && <Check className="size-3.5 text-black" strokeWidth={3} />}
-                  </button>
-                ))}
-              </div>
-              <p className="px-2 pt-2 pb-1 text-[12px] text-ink-3">Applied to buttons, rows, glow and the field behind the page.</p>
-            </motion.div>
-          </>
+        {mode === 'dark' ? (
+          <Sun className="size-[18px] text-ink-2 transition-colors group-hover:text-accent" strokeWidth={1.75} />
+        ) : (
+          <Moon className="size-[18px] text-ink-2 transition-colors group-hover:text-accent" strokeWidth={1.75} />
         )}
-      </AnimatePresence>
-    </div>
+      </motion.div>
+      {/* Permanent #38bdf8 brand glow dot */}
+      <span
+        className="absolute right-1.5 bottom-1.5 size-2 rounded-full shadow-[0_0_8px_#38bdf8] transition-transform duration-300 group-hover:scale-125"
+        style={{ backgroundColor: '#38bdf8' }}
+      />
+    </button>
   )
 }

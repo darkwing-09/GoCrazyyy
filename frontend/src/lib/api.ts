@@ -4,6 +4,12 @@ export type Listing = {
   favicon: string | null; category: Category; total_paise: number; clicks: number; is_demo: boolean
   published_at: string; last_paid_at: string | null; deal_text: string | null; coupon: string | null
   take_price_paise: number | null
+  contact_email?: string | null
+  twitter?: string | null
+  linkedin?: string | null
+  location?: string | null
+  stage?: string | null
+  contact_phone?: string | null
 }
 export type Activity = { slug: string; title: string; favicon: string | null; amount_paise: number; at: string; board: string; category: Category }
 export type Board = 'alltime' | 'today' | 'deals' | 'daily'
@@ -20,7 +26,7 @@ export type Home = {
 }
 export type BoardPage = { board: Board; category: string | null; day: string | null; total: number; page: number; pages: number; items: Listing[]; take_top_paise: number; activity: Activity[] }
 export type Quote = { rank: number; min_paise: number; projected_total_paise: number; take_top_paise: number; existing: { slug: string; title: string; current_rank: number | null; total_paise: number } | null }
-export type Stats = { source: string; online: number | null; visitors_today: number | null; visitors_total: number | null; revenue_paise: number; revenue_source: string; products: number; public_stats_url: string | null }
+export type Stats = { source: string; online: number | null; visitors_today: number | null; visitors_total: number | null; revenue_paise: number; revenue_source: string; products: number; public_stats_url: string | null; demo: boolean }
 export type CategoryCard = Category & { claims: number; last_claim_at: string | null; top: Listing[]; take_top_paise: number }
 export type Product = Listing & {
   overall: { rank: number | null; of: number; outrank_paise: number | null }
@@ -37,7 +43,10 @@ export type ClaimResult = {
 }
 export type PayResult = { ok: boolean; slug: string; title: string; rank: number | null; total_paise: number; board: string; of: number }
 
-export class ApiError extends Error { constructor(public status: number, message: string) { super(message) } }
+export class ApiError extends Error {
+  status: number
+  constructor(status: number, message: string) { super(message); this.status = status }
+}
 
 async function req<T>(path: string, init?: RequestInit): Promise<T> {
   const r = await fetch(path, { headers: { 'Content-Type': 'application/json' }, ...init })
