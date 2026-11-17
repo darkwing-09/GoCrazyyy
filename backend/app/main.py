@@ -25,12 +25,21 @@ app.add_middleware(CORSMiddleware, allow_origins=settings.origins, allow_methods
 
 PAGE_SIZE = 50
 
+db_init_error: str | None = None
+
 
 def init_db() -> None:
-    """Runs once per cold start. Vercel's Python runtime does not reliably fire ASGI startup events."""
-    Base.metadata.create_all(engine)
-    with SessionLocal() as db:
-        seed_categories(db)
+    """Runs once per cold start. Self-heals and logs errors without crashing."""
+    global db_init_error
+    try:
+        Base.metadata.create_all(engine)
+        with SessionLocal() as db:
+            seed_categories(db)
+        db_init_error = None
+    except Exception as e:
+        import traceback
+        db_init_error = f"{type(e).__name__}: {e}\n{traceback.format_exc()}"
+        log.exception("init_db failed on cold start: %s", e)
 
 
 init_db()
@@ -91,7 +100,25 @@ def meta():
 
 @app.get("/api/categories")
 def categories(db: Session = Depends(get_db)):
-    cats = db.execute(select(Category).order_by(Category.sort)).scalars().all()
+    try:
+        cats = db.execute(select(Category).order_by(Category.sort)).scalars().all()
+    except Exception:
+        # Schema or categories might need creation on first hit
+        try:
+            Base.metadata.create_all(engine)
+            seed_categories(db)
+            cats = db.execute(select(Category).order_by(Category.sort)).scalars().all()
+        except Exception as e:
+            log.exception("Self-healing categories failed: %s", e)
+            cats = []
+
+    if not cats:
+        try:
+            seed_categories(db)
+            cats = db.execute(select(Category).order_by(Category.sort)).scalars().all()
+        except Exception:
+            pass
+
     out = []
     for c in cats:
         rows = boards.ranked(db, "alltime", c.slug)
@@ -100,6 +127,28 @@ def categories(db: Session = Depends(get_db)):
                     "top": with_prices(rows[:3], "alltime"), "take_top_paise": pricing.price_for_rank(boards.totals_desc(rows), 1)})
     hot = sorted([c for c in out if c["last_claim_at"]], key=lambda c: c["last_claim_at"], reverse=True)[:3]
     return {"categories": out, "hottest": [c["slug"] for c in hot]}
+
+
+@app.get("/api/debug-db")
+def debug_db(db: Session = Depends(get_db)):
+    global db_init_error
+    turso_url = settings.turso_database_url or settings.database_url
+    cat_count = 0
+    query_error = None
+    try:
+        cat_count = len(db.execute(select(Category.id)).scalars().all())
+    except Exception as e:
+        query_error = f"{type(e).__name__}: {e}"
+    return {
+        "turso_configured": bool(settings.turso_database_url),
+        "token_configured": bool(settings.turso_auth_token),
+        "is_turso": settings.is_turso,
+        "is_serverless": settings.is_serverless,
+        "database_url_target": (turso_url[:35] + "...") if len(turso_url) > 35 else turso_url,
+        "category_count": cat_count,
+        "init_error": db_init_error,
+        "query_error": query_error,
+    }
 
 
 @app.get("/api/board")
