@@ -319,8 +319,6 @@ async def stats(response: Response, db: Session = Depends(get_db)):
         "sessions_total": a.get("sessions") if snap else None,
         "avg_session_seconds": a.get("avg_session_duration") if snap else None,
         "bounce_rate": a.get("bounce_rate") if snap else None,
-        "top_countries": snap["countries"] if snap else [],
-        "top_sources": snap["sources"] if snap else [],
         "revenue_paise": int(ledger), "revenue_source": "ledger",
         "products": int(products), "public_stats_url": settings.datafast_public_stats_url or None,
     }

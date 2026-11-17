@@ -60,12 +60,12 @@ function LiveStrip({ online, today, url }: { online: number | null; today: numbe
   const td = today ?? 0
   if (on <= 0 && td <= 0) return null
   const Inner = (
-    <span className="inline-flex items-center gap-2 rounded-full bg-accent-subtle px-2.5 py-1 text-[12px] font-semibold text-ink-2 ring-1 ring-accent/25">
+    <span className="inline-flex items-center gap-2 rounded-full bg-emerald-500/10 px-2.5 py-1 text-[12px] font-semibold text-ink-2 ring-1 ring-emerald-400/30">
       <span className="relative flex size-2" aria-hidden>
-        <span className="absolute inline-flex size-full animate-ping rounded-full bg-accent opacity-60" />
-        <span className="relative inline-flex size-2 rounded-full bg-accent" />
+        <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+        <span className="relative inline-flex size-2 rounded-full bg-emerald-400 shadow-[0_0_6px_#34d399]" />
       </span>
-      {on > 0 && <span className="tnum text-ink"><span className="text-accent">{count(on)}</span> online</span>}
+      {on > 0 && <span className="tnum animate-pulse text-emerald-400">{count(on)} online</span>}
       {on > 0 && td > 0 && <span className="hidden text-ink-3 sm:inline" aria-hidden>·</span>}
       {td > 0 && <span className={clsx('tnum', on > 0 && 'hidden sm:inline')}>{count(td)} {td === 1 ? 'visitor' : 'visitors'} today</span>}
     </span>

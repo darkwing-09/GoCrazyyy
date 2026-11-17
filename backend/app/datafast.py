@@ -105,12 +105,10 @@ async def snapshot(today: str) -> dict | None:
     """Everything the site shows, fetched in parallel."""
     if not enabled():
         return None
-    online, today_ov, all_ov, countries, sources = await asyncio.gather(
-        realtime_visitors(), overview(today, today), overview(), top("countries"), top("referrers"))
+    online, today_ov, all_ov = await asyncio.gather(realtime_visitors(), overview(today, today), overview())
     if all_ov is None:
         return None
-    return {"online": online, "today": today_ov or {}, "all": all_ov,
-            "countries": countries or [], "sources": sources or []}
+    return {"online": online, "today": today_ov or {}, "all": all_ov}
 
 
 async def post_payment(*, amount_paise: int, transaction_id: str, visitor_id: str | None,
