@@ -6,10 +6,10 @@ Prepared 17 November 2026. Owner: Varun.
 Early-stage Indian founders cannot afford ad auctions and get no proof that anyone saw their ad. Launch directories are free but invisible. There is no cheap, transparent way to buy attention from a founder audience.
 
 ## 2. Solution
-A public leaderboard where rank is bought. Pay ₹99 and you are listed. Pay more and you climb. Everyone can see what each spot cost, how many visitors the site gets, and how many clicks every listing received. The board is the ad, the numbers are the proof.
+A public leaderboard where rank is bought. Pay ₹9 and you are listed. Pay more and you climb. Everyone can see what each spot cost, how many visitors the site gets, and how many clicks every listing received. The board is the ad, the numbers are the proof.
 
 ## 3. Users
-- **Buyer**: founder or indie maker with ₹99 to ₹5,000 to spend. Wants traffic, backlink, and a screenshot to post.
+- **Buyer**: founder or indie maker with ₹9 to ₹5,000 to spend. Wants traffic, backlink, and a screenshot to post.
 - **Visitor**: founder, investor, builder browsing for new products. Wants a fast, scannable list.
 - **Operator**: one person running the site. Wants zero manual steps per sale.
 
@@ -18,7 +18,7 @@ A public leaderboard where rank is bought. Pay ₹99 and you are listed. Pay mor
 | --- | --- | --- |
 | Boards | All-time, Today (IST reset), Daily archive, per-category, Deals | Done |
 | Claim | URL or @handle, category, amount stepper, live rank quote, terms checkbox | Done |
-| Pricing | Min ₹99 new; #1 = current + ₹100; other rank = current + ₹10; raise = difference, min ₹10 | Done |
+| Pricing | Min ₹9 new; any rank, including #1 = current + ₹10; raise = difference, min ₹10 | Done |
 | Payments | Razorpay order → checkout → signature verify → webhook (idempotent) | Done |
 | Listing data | Title, description, favicon auto-fetched; query strings stripped; shorteners resolved | Done |
 | Product page | Ranks overall/category/deals, outrank price Q&A, ledger, "also in category" | Done |

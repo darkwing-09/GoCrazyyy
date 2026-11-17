@@ -113,7 +113,7 @@ export const ClaimHero = forwardRef<ClaimHeroHandle, Props>(function ClaimHero(
 
   const min =
     quote?.min_paise ??
-    (board === 'deals' ? meta?.pricing.min_new_deal ?? 4900 : meta?.pricing.min_new ?? 9900)
+    (board === 'deals' ? meta?.pricing.min_new_deal ?? 900 : meta?.pricing.min_new ?? 900)
   const valid =
     !!url.trim() &&
     !!cat &&

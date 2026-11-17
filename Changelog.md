@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.0.3 · 2026-11-17
+- Pricing: a new listing (or deal) starts at ₹9; taking any rank, including #1, costs its current total plus ₹10. Copy, share image and tests updated.
+
 ## 1.0.2 · 2026-11-17
 - Hero tubes are multi-colour (reference pink/green/violet palette by default; click empty hero space for three more) and the idle tube spans about 20% of the infinity loop.
 - Text reads solid: brighter secondary/meta text (ink-2 #e2e2e9, ink-3 #b8b8c4, ≥9:1), body weight 450, medium-weight small text, near-opaque cards and inputs behind text, no faded or glowing text, readable disabled buttons.

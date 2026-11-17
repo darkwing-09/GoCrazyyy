@@ -2,19 +2,19 @@
 
 ## Automated (run before every push)
 ```bash
-cd backend && uv run pytest -q          # 21 tests: pricing, SSRF guard, API flows, production gating
+cd backend && uv run pytest -q          # 22 tests: pricing, SSRF guard, API flows, production gating
 TEST_DATABASE_URL=postgresql://… uv run pytest -q   # same suite on Postgres
 cd frontend && npx tsc -b && pnpm build  # type-check + production bundle
 ```
 
-`backend/tests/test_pricing.py` covers: floors, +₹100 for #1, +₹10 for other ranks, tie-break (equal amount loses), deals pricing.
+`backend/tests/test_pricing.py` covers: ₹9 floors, +₹10 to take any rank including #1, tie-break (equal amount loses), deals pricing.
 
 `backend/tests/test_api.py` covers: sorted board and take-top price, category filter and pagination, terms and minimum validation, full claim → mock capture → idempotent repeat → raise by difference → cumulative total and product page `raise_count`, webhook bad signature rejected, good signature accepted once and deduped on replay with the listing published, `/out` redirect with utm, `/api/stats` ledger fallback.
 
 ## Manual (UI) checklist
 | # | Step | Expected |
 | --- | --- | --- |
-| 1 | Open `/` | Hero shows `Claim #1 for − ₹X +` where X = #1 total + ₹100; rows #1–#3 tinted; sidebars on ≥1024 px |
+| 1 | Open `/` | Hero shows `Claim #1 for − ₹X +` where X = #1 total + ₹10 (₹9 on an empty board); rows #1–#3 tinted; sidebars on ≥1024 px |
 | 2 | Press − / + | Amount steps ₹10, light sweep plays, rank in the headline updates after ~200 ms, #1 row glow brightens as amount approaches its total |
 | 3 | Type a URL, pick a category, tick Terms | Claim rank button enables; helper line says which rank it lands |
 | 4 | Submit (mock mode) | Dialog "Simulate successful payment" → "You're #N of M" → board refreshes with the new row |

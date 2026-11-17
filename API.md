@@ -30,11 +30,11 @@ Base: same origin as the site. On Vercel, `/api/*`, `/out/*` and `/webhooks/*` a
 ## Claims and payments
 ### `POST /api/claims`
 ```json
-{ "url": "https://example.com", "category": "developer-tools", "amount_paise": 9900, "board": "main",
+{ "url": "https://example.com", "category": "developer-tools", "amount_paise": 900, "board": "main",
   "deal_text": null, "coupon": null, "email": null, "df_visitor_id": null, "accept_terms": true,
   "location": "Bengaluru, IN", "stage": "Seed", "twitter": "handle", "linkedin": "company/url", "contact_phone": "+919876543210" }
 ```
-Returns 503 `Payments are temporarily unavailable` in production when Razorpay keys are missing. Rejects URLs that resolve to private, loopback or link-local addresses (400). Validates terms, whole rupees, ceiling, deal text (deals only), category, and the floor for that URL (₹99 new / ₹49 new deal / ₹10 raise). Resolves metadata, finds or creates the listing, creates the order.
+Returns 503 `Payments are temporarily unavailable` in production when Razorpay keys are missing. Rejects URLs that resolve to private, loopback or link-local addresses (400). Validates terms, whole rupees, ceiling, deal text (deals only), category, and the floor for that URL (₹9 new listing or deal / ₹10 raise). Resolves metadata, finds or creates the listing, creates the order.
 
 Returns `{ order_id, amount_paise, currency, key_id, mode: "razorpay"|"mock", listing{slug,title,favicon,domain,is_new}, projected_rank, projected_total_paise }`.
 

@@ -8,7 +8,7 @@ from tests.conftest import claim_and_pay
 
 def test_starts_empty_with_categories_only(client):
     d = client.get("/api/home").json()
-    assert d["alltime"]["items"] == [] and d["alltime"]["take_top_paise"] == 9900
+    assert d["alltime"]["items"] == [] and d["alltime"]["take_top_paise"] == 900
     cats = client.get("/api/categories").json()["categories"]
     assert len(cats) == len(seed.CATEGORIES)
 
@@ -16,8 +16,8 @@ def test_starts_empty_with_categories_only(client):
 def test_claim_requires_terms_and_minimum(client):
     r = client.post("/api/claims", json={"url": "example.com", "category": "developer-tools", "amount_paise": 9900, "accept_terms": False})
     assert r.status_code == 400
-    r = client.post("/api/claims", json={"url": "example.com", "category": "developer-tools", "amount_paise": 500, "accept_terms": True})
-    assert r.status_code == 400 and "Minimum" in r.json()["detail"]
+    r = client.post("/api/claims", json={"url": "example.com", "category": "developer-tools", "amount_paise": 800, "accept_terms": True})
+    assert r.status_code == 400 and "Minimum" in r.json()["detail"] and "₹9" in r.json()["detail"]
 
 
 def test_private_urls_are_refused(client):
@@ -49,7 +49,7 @@ def test_board_ranks_sorted_and_contacts_not_exposed_in_lists(client):
     items = d["alltime"]["items"]
     totals = [i["total_paise"] for i in items]
     assert totals == sorted(totals, reverse=True) and items[0]["rank"] == 1
-    assert d["alltime"]["take_top_paise"] == totals[0] + 100_00
+    assert d["alltime"]["take_top_paise"] == totals[0] + 10_00
     assert all(i["contact_email"] is None and i["contact_phone"] is None for i in items)
     cat = client.get("/api/board?board=alltime&category=marketing").json()
     assert [i["category"]["slug"] for i in cat["items"]] == ["marketing", "marketing"]

@@ -14,7 +14,7 @@ Status accepted. Both the checkout verify endpoint and the webhook call `record_
 Status accepted. outbid resets at UTC; our buyers are in India and "today" should mean their today.
 
 ## ADR-005 · Deals is a separate ledger board
-Status accepted. A payment is either `main` or `deals`. Mixing them would let a ₹49 deal count on All-time.
+Status accepted. A payment is either `main` or `deals`. Mixing them would let a deal payment count on All-time.
 
 ## ADR-006 · Mock checkout when keys are absent
 Status accepted. Lets anyone run the full claim flow locally and in CI without Razorpay credentials. The dialog says it is a mock and the server refuses the mock endpoint when real keys exist.
@@ -51,3 +51,6 @@ Date 2026-11-17 · Status accepted. The light theme and its toggle are removed; 
 
 ## ADR-017 · Progressive claim form
 Status accepted. Required fields carry `*`. Optional startup details appear automatically once the required URL and category are filled, so the first view stays short and nothing is tucked behind a toggle.
+
+## ADR-018 · ₹9 entry, +₹10 to overtake
+Date 2026-11-17 · Status accepted. A new listing (main board or Deals) costs at least ₹9. Taking any rank, including #1, costs that rank's current total plus ₹10; raising your own listing is at least ₹10. One small, uniform add-on replaces the earlier ₹99 floor and +₹100 for #1.

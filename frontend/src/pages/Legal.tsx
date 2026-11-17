@@ -34,7 +34,7 @@ export function Rules() {
       <section><h2>How ranking works</h2><ul>
         <li>Rank is the sum of all payments for a listing. ₹100 + ₹200 + ₹300 = ₹600.</li>
         <li>Ties go to the older listing. To take a rank you must pay strictly more than it.</li>
-        <li>A new listing costs at least ₹{p ? rupeesPlain(p.min_new) : 99}. Taking #1 costs the current #1 plus ₹{p ? rupeesPlain(p.take_top_bump) : 100}. Any other rank costs that rank's total plus ₹{p ? rupeesPlain(p.rank_bump) : 10}.</li>
+        <li>A new listing costs at least ₹{p ? rupeesPlain(p.min_new) : 9}. Taking any rank, including #1, costs that rank's current total plus ₹{p ? rupeesPlain(p.rank_bump) : 10}.</li>
         <li>Raising a listing you already own charges only the difference, minimum ₹{p ? rupeesPlain(p.min_raise) : 10}.</li>
         <li>Nobody can take your rank by paying "the difference". They must beat your full total.</li>
         <li>Rank is assigned when Razorpay confirms the capture, usually within seconds.</li>
@@ -55,7 +55,7 @@ export function Rules() {
 }
 
 const FAQS: [string, ReactNode][] = [
-  ['How much does it cost?', 'A new listing starts at ₹99. The price of a specific rank is shown on every row ("claim this rank for ₹X"). Taking #1 costs the current #1 total plus ₹100.'],
+  ['How much does it cost?', 'A new listing starts at ₹9. The price of a specific rank is shown on every row ("claim for ₹X"). Taking any rank, including #1, costs its current total plus ₹10.'],
   ['Do payments add up?', 'Yes. Everything you have ever paid for a listing counts. ₹100 now and ₹500 next month makes a ₹600 listing.'],
   ['Can someone outrank me by paying ₹10 more?', 'They have to pay more than your full total, not the difference. Only you get to raise by the difference.'],
   ['What happens on a tie?', 'The older listing wins. The newer one needs to pay strictly more.'],

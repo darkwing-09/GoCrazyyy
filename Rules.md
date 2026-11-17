@@ -13,8 +13,8 @@ Source of truth: `backend/app/pricing.py`, `backend/app/boards.py`, `backend/app
 | Rank | Sum of captured payments for the listing within the board's window, descending |
 | Tie | Older `published_at` wins; a newcomer must pay strictly more |
 | Cumulative | ₹100 + ₹200 + ₹300 = ₹600 |
-| New listing minimum | ₹99 (`MIN_NEW_LISTING`) |
-| Take #1 | current #1 total + ₹100 (`TAKE_TOP_BUMP`) |
+| New listing minimum | ₹9 (`MIN_NEW_LISTING`) |
+| Take #1 | current #1 total + ₹10 (`TAKE_TOP_BUMP`) |
 | Take rank N>1 | current rank-N total + ₹10 (`RANK_BUMP`) |
 | Raise own listing | pay the difference, minimum ₹10 (`MIN_RAISE`) |
 | Stepper step | ₹10 (`STEP`) |
@@ -27,7 +27,7 @@ Source of truth: `backend/app/pricing.py`, `backend/app/boards.py`, `backend/app
 | Today | since 00:00 IST today | `main` |
 | Daily `/daily/YYYY-MM-DD` | that IST day | `main` |
 | Category | All-time filtered by category | `main` |
-| Deals | all | `deals` (new deal minimum ₹49, take #1 = +₹10) |
+| Deals | all | `deals` (new deal minimum ₹9, take #1 = +₹10) |
 
 A payment made on the Deals board counts only there. A payment on the main board counts on All-time, Today, Daily and the listing's category.
 

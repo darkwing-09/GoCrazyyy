@@ -182,7 +182,7 @@ export function Product() {
                     and sits at <span className="text-accent font-semibold">#{p.overall.rank}</span> of {p.overall.of}{' '}
                     overall. Taking that rank costs{' '}
                     <span className="tnum font-mono text-ink font-semibold">{rupees(outrank!)}</span> right now (
-                    {p.overall.rank === 1 ? 'the current total plus ₹100' : 'the current total plus ₹10'}).{' '}
+                    the current total plus ₹10).{' '}
                     <Link to="/" className="text-accent underline underline-offset-4 hover:brightness-125">
                       Claim it on the board
                     </Link>

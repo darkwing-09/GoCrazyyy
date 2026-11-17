@@ -54,7 +54,7 @@ vercel --prod
 1. Dashboard → Settings → API Keys → generate **live** keys → set both env vars.
 2. Dashboard → Settings → Webhooks → Add: URL `https://your-domain.in/webhooks/razorpay`, secret = `RAZORPAY_WEBHOOK_SECRET`, event `payment.captured`.
 3. Activation review needs the live site with Terms, Refunds, Privacy and Contact pages: all exist, and Contact shows `CONTACT_EMAIL`, `BUSINESS_NAME` and `BUSINESS_ADDRESS`.
-4. Make one live ₹99 payment. Confirm the listing appears, and that `/api/health` reports `"payments": "razorpay"`.
+4. Make one live ₹9 payment. Confirm the listing appears, and that `/api/health` reports `"payments": "razorpay"`.
 
 ## 5. DataFast
 1. Create the website, set its currency to INR, copy the website id and create a `df_` API key.
