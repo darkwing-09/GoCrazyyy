@@ -16,7 +16,11 @@ BASE = "https://datafa.st/api/v1"
 TZ = "Asia/Kolkata"
 _cache: dict[str, tuple[float, object]] = {}
 _resolved_site_id: str | None = None
-last_error: str | None = None  # non-secret, surfaced by /api/health for diagnosis
+last_error: str | None = None
+resolved_site: dict | None = None  # public fields only: domain + tracking id
+# The tracking id the site's <script> reports to (frontend/index.html). Used when
+# DATAFAST_WEBSITE_ID is unset, so the API reads the same website the script writes to.
+SCRIPT_TRACKING_ID = "dfid_Ah4BhqUS8PmdW5Mw8XwOv"  # non-secret, surfaced by /api/health for diagnosis
 
 
 def _clean(v: str) -> str:
@@ -67,10 +71,10 @@ def _record(where: str, e: Exception) -> None:
 
 async def _site_id(c: httpx.AsyncClient) -> str | None:
     """Internal website id for dft_ account tokens (None for df_ website keys)."""
-    global _resolved_site_id
+    global _resolved_site_id, resolved_site
     if not _key().startswith("dft_"):
         return None
-    configured = _clean(settings.datafast_website_id)
+    configured = _clean(settings.datafast_website_id) or SCRIPT_TRACKING_ID
     if configured and not configured.startswith("dfid_"):
         return configured
     if _resolved_site_id:
@@ -87,6 +91,7 @@ async def _site_id(c: httpx.AsyncClient) -> str | None:
         raise RuntimeError(f"website not matched (domain={domain or 'unset'}; account has: {names}). "
                            "Set DATAFAST_WEBSITE_ID to the website's id or DATAFAST_DOMAIN to one of these.")
     _resolved_site_id = match["_id"]
+    resolved_site = {"domain": match.get("domain"), "trackingId": match.get("trackingId"), "of": len(sites)}
     return _resolved_site_id
 
 

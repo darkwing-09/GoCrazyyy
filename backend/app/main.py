@@ -549,5 +549,5 @@ def health(db: Session = Depends(get_db)):
         db_ok = False
     return {"ok": db_ok, "database": db_ok, "payments": settings.payments_mode,
             "datafast": datafast.enabled(), "datafast_key": datafast.key_kind(),
-            "datafast_error": datafast.last_error,
+            "datafast_error": datafast.last_error, "datafast_site": datafast.resolved_site,
             "env": "production" if settings.is_production else "development"}
