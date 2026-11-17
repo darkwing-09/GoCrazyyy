@@ -62,7 +62,7 @@ export function Home({ tab }: { tab: Tab }) {
         <p className="mt-5 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-center text-[13px] font-medium text-ink-2">Every deal must offer a real discount.{meta?.deals_closes_at && <> This board closes in <Countdown to={meta.deals_closes_at} /></>}</p>
       )}
       {tab === 'today' && (
-        <p className="mt-5 flex items-center justify-center gap-2 text-center text-[13px] font-medium text-ink-2">Spend since midnight IST. Resets in <Countdown to={nextMidnightIST()} /></p>
+        <p className="mt-5 flex items-center justify-center gap-2 text-center text-[13px] font-medium text-ink-2">Ad spend since midnight IST. Resets in <Countdown to={nextMidnightIST()} /></p>
       )}
       <ClaimHero ref={hero} board={board} category={slug} takeTopPaise={takeTop} onPaid={() => { load(); refreshStats() }} onAmountChange={setOffer} />
 
@@ -101,11 +101,11 @@ function Skeleton() {
 }
 
 function Empty({ tab, catName }: { tab: Tab; catName?: string }) {
-  const msg = tab === 'today' ? 'Nobody has claimed a rank since midnight IST.' : tab === 'deals' ? `Nobody has listed a deal${catName ? ` in ${catName}` : ''} yet.` : `Nothing listed${catName ? ` in ${catName}` : ''} yet.`
+  const msg = tab === 'today' ? 'No listings featured since midnight IST.' : tab === 'deals' ? `Nobody has listed a deal${catName ? ` in ${catName}` : ''} yet.` : `Nothing listed${catName ? ` in ${catName}` : ''} yet.`
   return (
     <div className="rounded-2xl bg-surface px-6 py-14 text-center hairline">
       <p className="display text-xl font-semibold">{msg}</p>
-      <p className="mt-2 text-[13.5px] text-ink-2">The first claim takes #1 at the minimum price. <a href="#claim" className="text-accent underline-offset-4 hover:underline">Claim it</a> or <Link to="/categories" className="text-ink underline-offset-4 hover:underline">explore categories</Link>.</p>
+      <p className="mt-2 text-[13.5px] text-ink-2">The first listing features at #1 from the minimum price. <a href="#claim" className="text-accent underline-offset-4 hover:underline">Feature yours</a> or <Link to="/categories" className="text-ink underline-offset-4 hover:underline">explore categories</Link>.</p>
     </div>
   )
 }

@@ -13,12 +13,12 @@ export function Daily() {
   return (
     <PageShell>
       <h1 className="display mt-10 text-center text-[2.25rem] font-bold sm:text-[2.75rem]">One board per day</h1>
-      <p className="mx-auto mt-2 max-w-xl text-center text-[14.5px] text-ink-2">Each IST day gets its own frozen leaderboard of that day's spend. Whales can own All-time; today is anyone's.</p>
+      <p className="mx-auto mt-2 max-w-xl text-center text-[14.5px] text-ink-2">Each IST day has its own board of that day's advertising spend. All-time rewards the biggest spenders; a small budget can lead a single day.</p>
       <div className="mt-10 space-y-3">
         {days !== null && days.length === 0 && (
           <div className="rounded-2xl bg-surface px-6 py-14 text-center hairline">
             <p className="display text-xl font-semibold">Today's board is open.</p>
-            <p className="mt-2 text-[13.5px] text-ink-2">The first claim of the day takes #1. <Link to="/today" className="text-accent underline-offset-4 hover:underline">Claim today's top spot</Link>.</p>
+            <p className="mt-2 text-[13.5px] text-ink-2">The first listing of the day features at #1. <Link to="/today" className="text-accent underline-offset-4 hover:underline">Feature at the top today</Link>.</p>
           </div>
         )}
         {(days ?? []).map((d, i) => (
@@ -29,7 +29,7 @@ export function Daily() {
                 {d.live && resets && <span className="flex items-center gap-2 text-[12px] text-accent"><span className="size-1.5 animate-pulse rounded-full bg-accent" />live · resets in <Countdown to={resets} /></span>}
                 <span className="ml-auto text-[12.5px] font-medium text-ink-3"><span className="tnum text-ink">{count(d.count)}</span> {d.count === 1 ? 'listing' : 'listings'} · <span className="tnum font-mono text-ink">{rupees(d.revenue_paise)}</span></span>
               </div>
-              {d.top.length === 0 ? <p className="mt-3 text-[13px] font-medium text-ink-3">No ranks claimed{d.live ? ' yet today' : ' that day'}.</p> : (
+              {d.top.length === 0 ? <p className="mt-3 text-[13px] font-medium text-ink-3">No listings featured{d.live ? ' yet today' : ' that day'}.</p> : (
                 <ol className="mt-3 grid gap-2 sm:grid-cols-3">
                   {d.top.map(l => (
                     <li key={l.slug}><Link to={`/product/${l.slug}`} className="flex items-center gap-2.5 rounded-xl px-2 py-1.5 transition hover:bg-accent-subtle"><span className="tnum font-mono text-[12px] text-accent">#{l.rank}</span><img src={l.favicon ?? ''} alt="" className="size-7 rounded-lg bg-line-strong" loading="lazy" /><span className="min-w-0 flex-1 truncate text-[13px]">{l.title}</span><span className="tnum font-mono text-[12px] text-ink-2">{rupees(l.total_paise)}</span></Link></li>

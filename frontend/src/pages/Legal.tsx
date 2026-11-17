@@ -23,7 +23,7 @@ export function Rules() {
   const { meta } = useAppData()
   const p = meta?.pricing
   return (
-    <Doc title="Rules" lede="Short, because the mechanism is simple: the total you have paid is your rank.">
+    <Doc title="Rules" lede="Short, because the mechanism is simple: your advertising spend sets your placement.">
       <section><h2>Boards</h2><ul>
         <li><strong>All-time</strong>: every captured payment for a listing, ever.</li>
         <li><strong>Today</strong>: payments since midnight IST. Resets daily.</li>
@@ -36,7 +36,7 @@ export function Rules() {
         <li>Ties go to the older listing. To take a rank you must pay strictly more than it.</li>
         <li>A new listing costs at least ₹{p ? rupeesPlain(p.min_new) : 9}. Taking any rank, including #1, costs that rank's current total plus ₹{p ? rupeesPlain(p.rank_bump) : 10}.</li>
         <li>Raising a listing you already own charges only the difference, minimum ₹{p ? rupeesPlain(p.min_raise) : 10}.</li>
-        <li>Nobody can take your rank by paying "the difference". They must beat your full total.</li>
+        <li>Nobody can feature above you by paying only "the difference". They must spend more than your full total.</li>
         <li>Rank is assigned when Razorpay confirms the capture, usually within seconds.</li>
       </ul></section>
       <section><h2>What you can list</h2><ul>
@@ -55,11 +55,11 @@ export function Rules() {
 }
 
 const FAQS: [string, ReactNode][] = [
-  ['How much does it cost?', 'A new listing starts at ₹9. The price of a specific rank is shown on every row ("claim for ₹X"). Taking any rank, including #1, costs its current total plus ₹10.'],
+  ['How much does it cost?', 'A new listing starts at ₹9. The price of a specific position is shown on every row ("feature for ₹X"). Featuring at any position, including #1, costs its current total plus ₹10.'],
   ['Do payments add up?', 'Yes. Everything you have ever paid for a listing counts. ₹100 now and ₹500 next month makes a ₹600 listing.'],
-  ['Can someone outrank me by paying ₹10 more?', 'They have to pay more than your full total, not the difference. Only you get to raise by the difference.'],
+  ['Can someone feature above me by paying ₹10 more?', 'They have to spend more than your full total, not just the difference. Only you can raise your own placement by the difference.'],
   ['What happens on a tie?', 'The older listing wins. The newer one needs to pay strictly more.'],
-  ['What is the Today board?', 'Spend since midnight IST. It resets daily, so a small budget can own a day even when All-time is locked by big spenders. Every day is archived on the Daily page.'],
+  ['What is the Today board?', 'Spend since midnight IST. It resets daily, so a small budget can lead a day even when the All-time board is held by bigger spenders. Every day is archived on the Daily page.'],
   ['What is the Deals board?', 'A separate list for discounts. You describe the offer (up to 100 characters) and optionally add a coupon code. Deals must be real.'],
   ['Can I list an idea with no website?', 'You need a working URL or an X handle. Idea-stage listings are fine, but they are public, so do not post anything you are not ready for others to see.'],
   ['How do I pay?', 'Through Razorpay: UPI, cards, netbanking and wallets. Prices are in rupees and include GST where it applies.'],
@@ -95,7 +95,7 @@ export function Terms() {
   const name = meta?.business.name ?? 'GoCrazy'
   const city = meta?.business.jurisdiction
   return (
-    <Doc title="Terms of service" lede="Plain-language terms. By claiming a rank you agree to them.">
+    <Doc title="Terms of service" lede="Plain-language terms. By featuring a listing you agree to them.">
       <section><h2>1. What this is</h2><p>{name} operates GoCrazy and sells paid placements on public leaderboards. Every listing is an advertisement and is labelled as one. We do not endorse any listed product.</p></section>
       <section><h2>2. Who can buy</h2><p>You must be 18 or older and able to enter a contract. If you list on behalf of a company, you confirm you are allowed to.</p></section>
       <section><h2>3. Payments and taxes</h2><p>Prices are in Indian rupees and processed by Razorpay. The price shown includes GST where it applies. You are responsible for any other taxes. Payments add to your listing's total and are never returned.</p></section>

@@ -1,16 +1,10 @@
-/** DataFast tracking script. The website id is public; the API key never reaches the browser. */
-export function installDataFast(websiteId: string | null, domain: string | null) {
-  if (!websiteId || document.getElementById('datafast-script')) return
-  const s = document.createElement('script')
-  s.id = 'datafast-script'
-  s.defer = true
-  s.src = 'https://datafa.st/js/script.js'
-  s.dataset.websiteId = websiteId
-  if (domain) s.dataset.domain = domain
-  document.head.appendChild(s)
-}
+/**
+ * The DataFast tracking script is loaded statically from index.html (cookieless build).
+ * Only the public website id reaches the browser; the server-side API key never does.
+ */
 
-/** Visitor id the tracking script sets, attached to the Razorpay order so revenue is attributed. */
+/** Visitor id the tracking script sets, attached to the Razorpay order so revenue is attributed.
+ *  In cookieless mode this cookie is usually absent, so attribution falls back to null. */
 export function dataFastVisitorId(): string | null {
   const m = document.cookie.match(/(?:^|;\s*)datafast_visitor_id=([^;]+)/)
   return m ? decodeURIComponent(m[1]) : null

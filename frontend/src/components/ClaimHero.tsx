@@ -150,7 +150,7 @@ export const ClaimHero = forwardRef<ClaimHeroHandle, Props>(function ClaimHero(
           orderId: claim.order_id,
           amountPaise: claim.amount_paise,
           title: claim.listing.title,
-          description: `Rank for ${claim.listing.domain} on GoCrazy`,
+          description: `GoCrazy advertising – ${claim.listing.domain}`,
           accentHex: accent.hex,
           email: email.trim() || undefined,
           onDismiss: () => setCheckout(null),
@@ -194,7 +194,7 @@ export const ClaimHero = forwardRef<ClaimHeroHandle, Props>(function ClaimHero(
     <section id="claim" className="scroll-mt-24 pt-10 pb-4">
       {/* Hero Stepper Headline */}
       <h1 className="display text-lift balance text-center text-[2.2rem] leading-[1.08] font-bold tracking-tight text-ink sm:text-[2.9rem] md:text-[3.5rem]">
-        Claim{' '}
+        Feature at{' '}
         <AnimatePresence mode="popLayout" initial={false}>
           <motion.span
             key={rank}
@@ -285,7 +285,7 @@ export const ClaimHero = forwardRef<ClaimHeroHandle, Props>(function ClaimHero(
             className="sm:w-38"
             data-sweep={valid ? '1' : '0'}
           >
-            {busy ? <Loader2 className="size-4.5 animate-spin" /> : 'Claim rank'}
+            {busy ? <Loader2 className="size-4.5 animate-spin" /> : 'Feature now'}
           </Button>
         </div>
 
@@ -422,7 +422,7 @@ export const ClaimHero = forwardRef<ClaimHeroHandle, Props>(function ClaimHero(
               <Link to="/terms" className="text-ink underline underline-offset-4 hover:text-accent">
                 Terms
               </Link>
-              <span className="text-accent" aria-hidden> *</span>. Paid placement, rank is bought.
+              <span className="text-accent" aria-hidden> *</span>. Paid advertising placement, no refunds.
             </span>
           </label>
           <input
@@ -456,8 +456,8 @@ export const ClaimHero = forwardRef<ClaimHeroHandle, Props>(function ClaimHero(
                 </span>
               ) : (
                 <span className="text-ink-2">
-                  ₹{rupeesPlain(amount)} lands you at <span className="text-accent font-semibold">#{quote.rank}</span>
-                  {where}. Ranks add up: pay again anytime to climb.
+                  ₹{rupeesPlain(amount)} features you at <span className="text-accent font-semibold">#{quote.rank}</span>
+                  {where}. Ad spend adds up: advertise again anytime to rank higher.
                 </span>
               )
             )

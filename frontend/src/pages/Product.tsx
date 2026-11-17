@@ -174,17 +174,17 @@ export function Product() {
               {p.overall.rank && (
                 <div>
                   <dt className="font-semibold text-ink">
-                    How much does it cost to outrank {p.title.split(' · ')[0]}?
+                    How much to feature above {p.title.split(' · ')[0]}?
                   </dt>
                   <dd className="mt-1 text-ink-2">
-                    {p.title.split(' · ')[0]} has paid{' '}
+                    {p.title.split(' · ')[0]} has spent{' '}
                     <span className="tnum font-mono text-ink font-semibold">{rupees(p.total_paise)}</span> in total
                     and sits at <span className="text-accent font-semibold">#{p.overall.rank}</span> of {p.overall.of}{' '}
-                    overall. Taking that rank costs{' '}
+                    overall. Featuring above it costs{' '}
                     <span className="tnum font-mono text-ink font-semibold">{rupees(outrank!)}</span> right now (
                     the current total plus ₹10).{' '}
                     <Link to="/" className="text-accent underline underline-offset-4 hover:brightness-125">
-                      Claim it on the board
+                      Feature your startup
                     </Link>
                     .
                   </dd>
@@ -256,7 +256,7 @@ export function Product() {
             <div className="tnum font-mono text-xl font-bold">{rupees(p.total_paise)}</div>
             {outrank && (
               <Link to={`/?claim=${outrank}`}>
-                <Button className="mt-4.5 w-full">Outrank for {rupees(outrank)}</Button>
+                <Button className="mt-4.5 w-full">Feature above for {rupees(outrank)}</Button>
               </Link>
             )}
           </div>

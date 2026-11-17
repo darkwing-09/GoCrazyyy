@@ -14,7 +14,7 @@ export function Categories() {
   return (
     <PageShell>
       <h1 className="display mt-10 text-center text-[2.25rem] font-bold sm:text-[2.75rem]">Every category has its own #1</h1>
-      <p className="mx-auto mt-2 max-w-xl text-center text-[14.5px] text-ink-2">Each board prices its top spot separately. Take #1 in a quiet category for a few hundred rupees, or fight for the hot ones.</p>
+      <p className="mx-auto mt-2 max-w-xl text-center text-[14.5px] text-ink-2">Each category is priced separately. Feature at the top of a quiet category for a few hundred rupees, or in the busiest ones.</p>
 
       {hotCards.length > 0 && (
         <Reveal className="mt-10">
@@ -37,7 +37,7 @@ export function Categories() {
             <div className="h-full rounded-2xl bg-surface p-4 hairline transition hover:bg-raised">
               <Link to={`/category/${c.slug}`} className="flex items-center gap-2 font-semibold hover:text-accent"><CatIcon name={c.icon} className="size-4 text-accent" />{c.name}</Link>
               {c.top.length === 0 ? (
-                <p className="mt-3 text-[12.5px] font-medium text-ink-3">#1 is open. <Link to={`/category/${c.slug}`} className="text-accent hover:underline">Claim it for {rupees(c.take_top_paise)}</Link>.</p>
+                <p className="mt-3 text-[12.5px] font-medium text-ink-3">Top spot open. <Link to={`/category/${c.slug}`} className="text-accent hover:underline">Feature here for {rupees(c.take_top_paise)}</Link>.</p>
               ) : (
                 <ol className="mt-3 space-y-1">
                   {c.top.map(l => (

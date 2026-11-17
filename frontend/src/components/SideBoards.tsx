@@ -84,7 +84,7 @@ export function SideBoards({
         title="Today's Board"
         items={today}
         to={`${base}/today`}
-        empty="Nobody has claimed a rank since midnight IST."
+        empty="No listings featured since midnight IST."
       />
     </aside>
   )

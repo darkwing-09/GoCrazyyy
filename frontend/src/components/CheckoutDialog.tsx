@@ -43,8 +43,8 @@ export function CheckoutDialog({ state, onClose, onMockPay }: { state: CheckoutS
             {state.kind === 'done' && (
               <div className="mt-5 text-center">
                 <div className="mx-auto flex size-14 items-center justify-center rounded-full bg-accent-muted text-accent shadow-[var(--accent-glow)]"><Trophy className="size-6" /></div>
-                <p className="display mt-4 text-2xl font-bold">You're <span className="text-accent">#{state.result.rank ?? '—'}</span> of {state.result.of}</p>
-                <p className="mt-1 text-[13.5px] text-ink-2">Total paid so far: <span className="tnum font-mono text-ink">{rupees(state.result.total_paise)}</span>. Pay again any time to climb.</p>
+                <p className="display mt-4 text-2xl font-bold">Your ad is live at <span className="text-accent">#{state.result.rank ?? '—'}</span> of {state.result.of}</p>
+                <p className="mt-1 text-[13.5px] text-ink-2">Ad spend so far: <span className="tnum font-mono text-ink">{rupees(state.result.total_paise)}</span>. Advertise again any time to rank higher.</p>
                 <div className="mt-5 flex gap-2">
                   <Button variant="outline" className="flex-1" onClick={onClose}>Back to board</Button>
                   <Link to={`/product/${state.result.slug}`} onClick={onClose} className="flex-1"><Button className="w-full">See your listing</Button></Link>

@@ -213,7 +213,7 @@ export function ListingRow({
               onClick={() => onClaim(l)}
               className="ml-auto hidden cursor-pointer rounded-full border border-accent/30 bg-accent-subtle px-2.5 py-1 text-[12px] font-semibold text-accent transition hover:bg-accent hover:text-accent-ink hover:shadow-[var(--accent-glow)] sm:inline-flex"
             >
-              claim for {rupees(l.take_price_paise)}
+              feature for {rupees(l.take_price_paise)}
             </button>
           )}
         </div>

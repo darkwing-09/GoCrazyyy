@@ -10,7 +10,7 @@ export function ActivityFeed({ items }: { items: Activity[] }) {
       <h2 className="mb-2.5 flex items-center gap-2 text-[12px] font-semibold tracking-wider text-ink uppercase">
         <span className="size-2 rounded-full bg-accent animate-ping" />
         <span className="size-1.5 rounded-full bg-accent -ml-3.5" />
-        Live Outbid Activity
+        Latest placements
       </h2>
       <div className="flex gap-2.5 overflow-x-auto pb-1.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {items.map((a, i) => (
