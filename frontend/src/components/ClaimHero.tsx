@@ -283,16 +283,6 @@ export const ClaimHero = forwardRef<ClaimHeroHandle, Props>(function ClaimHero(
             </select>
             <ChevronDown className="pointer-events-none absolute top-1/2 right-3.5 z-10 size-4 -translate-y-1/2 text-ink-2" />
           </label>
-          <Button
-            type="submit"
-            size="lg"
-            sweep
-            disabled={!valid || busy}
-            className="sm:w-38"
-            data-sweep={valid ? '1' : '0'}
-          >
-            {busy ? <Loader2 className="size-4.5 animate-spin" /> : 'Feature now'}
-          </Button>
         </div>
 
         {board === 'deals' && (
@@ -484,6 +474,16 @@ export const ClaimHero = forwardRef<ClaimHeroHandle, Props>(function ClaimHero(
             )
           )}
         </div>
+        <Button
+          type="submit"
+          size="lg"
+          sweep
+          disabled={!valid || busy}
+          data-sweep={valid ? '1' : '0'}
+          className="mt-4 w-full"
+        >
+          {busy ? <Loader2 className="size-4.5 animate-spin" /> : 'Feature now'}
+        </Button>
       </form>
 
       <CheckoutDialog state={checkout} onClose={() => setCheckout(null)} onMockPay={mockPay} />
