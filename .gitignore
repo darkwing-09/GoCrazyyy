@@ -1,5 +1,9 @@
 # backend
 backend/.env
+vercel/.env
+.env
+.env.local
+.env.*
 backend/.venv/
 backend/*.db
 backend/*.db-wal
