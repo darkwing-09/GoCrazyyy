@@ -13,21 +13,21 @@ if is_sqlite and settings.is_serverless:
 
 engine_kwargs: dict = {"pool_pre_ping": True}
 if is_turso:
-    connect_args: dict = {}
-    token = settings.turso_auth_token.strip()
-    if token:
-        connect_args["auth_token"] = token
-    if connect_args:
-        engine_kwargs["connect_args"] = connect_args
-    if settings.is_serverless:
-        engine_kwargs["poolclass"] = NullPool
+    from . import turso as _turso
+    turso_url = settings.turso_database_url or settings.database_url
+    turso_token = settings.turso_auth_token.strip()
+    engine_kwargs["creator"] = lambda: _turso.connect(turso_url, turso_token)
+    engine_kwargs["poolclass"] = NullPool
+    engine = create_engine("sqlite+tursohttp://", **engine_kwargs)
 elif is_sqlite:
     engine_kwargs["connect_args"] = {"check_same_thread": False}
+    engine = create_engine(url, **engine_kwargs)
 elif settings.is_serverless:
-    # Each serverless instance is short-lived; let the Neon pooler hold connections.
+    # Each serverless instance is short-lived; let the pooler hold connections.
     engine_kwargs["poolclass"] = NullPool
-
-engine = create_engine(url, **engine_kwargs)
+    engine = create_engine(url, **engine_kwargs)
+else:
+    engine = create_engine(url, **engine_kwargs)
 
 if is_sqlite:
     @event.listens_for(engine, "connect")
