@@ -13,6 +13,14 @@
   },
   "rewrites": [
     {
+      "source": "/js/script.cookieless.js",
+      "destination": "https://datafa.st/js/script.cookieless.js"
+    },
+    {
+      "source": "/df/events",
+      "destination": "https://datafa.st/api/events"
+    },
+    {
       "source": "/api/:path*",
       "destination": "/api/index"
     },

@@ -28,12 +28,14 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Schibsted+Grotesk:wght@400..700&family=Spline+Sans+Mono:wght@400..600&display=swap"
     rel="stylesheet" />
-  <!-- DataFast analytics (cookieless). Loads on every page via the app shell. -->
+  <!-- DataFast analytics (cookieless), proxied through our own domain (vercel.json rewrites)
+       so ad blockers don't drop visits. /df/events avoids clashing with our /api/* routes. -->
   <script
     defer
     data-website-id="dfid_Ah4BhqUS8PmdW5Mw8XwOv"
     data-domain="gocrazyy.vercel.app"
-    src="https://datafa.st/js/script.cookieless.js"></script>
+    data-api-url="/df/events"
+    src="/js/script.cookieless.js"></script>
 </head>
 
 <body>
