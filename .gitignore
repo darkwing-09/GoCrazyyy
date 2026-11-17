@@ -32,3 +32,8 @@ backend/backups/
 
 # project documentation (kept local, not published)
 docs/
+
+# internal / local-only (not part of the public repo)
+CLAUDE.md
+AGENTS.md
+.impeccable/
