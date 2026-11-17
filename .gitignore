@@ -25,3 +25,6 @@ backend/backups/
 *.db-wal
 *.db-shm
 *.db-journal
+
+# project documentation (kept local, not published)
+docs/

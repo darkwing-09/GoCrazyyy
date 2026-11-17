@@ -1,6 +1,8 @@
 # Kept identical to the root requirements.txt so Vercel resolves the same dependencies either way.
 fastapi>=0.163.1
 sqlalchemy>=2.1.8
+sqlalchemy-libsql>=0.1.0
+turso-serverless>=0.1.0
 psycopg[binary]>=3.3.9
 pydantic-settings>=2.16.3
 httpx>=0.28.1

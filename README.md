@@ -39,14 +39,8 @@ cd frontend && pnpm build                                         # type-check a
 
 ## Deploy
 
-See [Deployment.md](Deployment.md): connect Neon Postgres, set the environment variables, import the repository into Vercel, and point the Razorpay webhook at `/webhooks/razorpay`.
+Deploy to Vercel with Neon Postgres: connect the database, set the environment variables listed in `backend/.env.example`, import the repository, and point the Razorpay webhook at `/webhooks/razorpay`.
 
 ## Documentation
 
-- [PRD.md](PRD.md): what we are building and why
-- [Architecture.md](Architecture.md): how the pieces fit
-- [API.md](API.md), [DataModel.md](DataModel.md), [Config.md](Config.md)
-- [Rules.md](Rules.md): ranking and pricing rules as implemented
-- [Deployment.md](Deployment.md), [Security.md](Security.md), [TestPlan.md](TestPlan.md)
-- [Plan.md](Plan.md), [Implementation.md](Implementation.md), [Progress.md](Progress.md), [Decisions.md](Decisions.md), [Issues.md](Issues.md), [Changelog.md](Changelog.md)
-- [CLAUDE.md](CLAUDE.md) and [AGENTS.md](AGENTS.md): instructions for coding agents
+Project documentation (PRD, architecture, API, data model, rules, deployment, security, test plan, decisions and progress) lives in `docs/`, which is kept local and not published to this repository. [CLAUDE.md](CLAUDE.md) and [AGENTS.md](AGENTS.md) hold the instructions for coding agents.

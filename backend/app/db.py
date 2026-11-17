@@ -5,13 +5,23 @@ from .config import get_settings
 
 settings = get_settings()
 url = settings.sqlalchemy_url
-is_sqlite = url.startswith("sqlite")
+is_turso = settings.is_turso or "libsql" in url or "turso.io" in url
+is_sqlite = url.startswith("sqlite") and not is_turso
 
 if is_sqlite and settings.is_serverless:
-    raise RuntimeError("DATABASE_URL must point to Postgres on Vercel; the filesystem is not persistent.")
+    raise RuntimeError("Local SQLite cannot be used on Vercel; filesystem is ephemeral. Configure Turso (TURSO_DATABASE_URL + TURSO_AUTH_TOKEN) or Postgres.")
 
 engine_kwargs: dict = {"pool_pre_ping": True}
-if is_sqlite:
+if is_turso:
+    connect_args: dict = {}
+    token = settings.turso_auth_token.strip()
+    if token:
+        connect_args["auth_token"] = token
+    if connect_args:
+        engine_kwargs["connect_args"] = connect_args
+    if settings.is_serverless:
+        engine_kwargs["poolclass"] = NullPool
+elif is_sqlite:
     engine_kwargs["connect_args"] = {"check_same_thread": False}
 elif settings.is_serverless:
     # Each serverless instance is short-lived; let the Neon pooler hold connections.

@@ -12,6 +12,9 @@ class Settings(BaseSettings):
 
     # Neon / Vercel Postgres expose DATABASE_URL or POSTGRES_URL.
     database_url: str = Field("sqlite:///./gocrazy.db", validation_alias=AliasChoices("DATABASE_URL", "POSTGRES_URL"))
+    # Turso libSQL remote database credentials
+    turso_database_url: str = Field("", validation_alias=AliasChoices("TURSO_DATABASE_URL", "LIBSQL_URL"))
+    turso_auth_token: str = Field("", validation_alias=AliasChoices("TURSO_AUTH_TOKEN", "LIBSQL_AUTH_TOKEN"))
     site_url: str = "http://localhost:5173"
     frontend_origins: str = "http://localhost:5173,http://127.0.0.1:5173"
 
@@ -51,8 +54,35 @@ class Settings(BaseSettings):
         return self.payments_mode == "mock" and not self.is_production
 
     @property
+    def is_turso(self) -> bool:
+        return bool(self.turso_database_url) or "libsql" in self.database_url or "turso.io" in self.database_url
+
+    @property
     def sqlalchemy_url(self) -> str:
-        url = self.database_url
+        if self.turso_database_url:
+            raw = self.turso_database_url.strip()
+            if raw.startswith("libsql://"):
+                base = "sqlite+" + raw
+            elif raw.startswith("sqlite+libsql://"):
+                base = raw
+            elif raw.startswith("https://"):
+                base = "sqlite+https://" + raw[8:]
+            else:
+                base = f"sqlite+libsql://{raw}"
+            if "?" not in base:
+                base = f"{base}?secure=true"
+            elif "secure=" not in base:
+                base = f"{base}&secure=true"
+            return base
+
+        url = self.database_url.strip()
+        if "libsql://" in url or "turso.io" in url:
+            if url.startswith("libsql://"):
+                url = "sqlite+" + url
+            if "?" not in url:
+                url = f"{url}?secure=true"
+            return url
+
         for prefix in ("postgres://", "postgresql://"):
             if url.startswith(prefix):
                 return "postgresql+psycopg://" + url[len(prefix):]

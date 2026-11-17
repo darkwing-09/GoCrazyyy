@@ -11,7 +11,7 @@ Shared instructions for AI coding agents (Codex, Cursor, Claude, Gemini). CLAUDE
 cd backend && uv run uvicorn app.main:app --reload --port 8000
 cd frontend && pnpm dev
 cd frontend && npx tsc -b && pnpm build
-cd backend && uv run pytest        # see TestPlan.md
+cd backend && uv run pytest        # see docs/TestPlan.md
 ```
 
 ## Rules of the road
@@ -21,5 +21,5 @@ cd backend && uv run pytest        # see TestPlan.md
 3a. No seeded listings, no demo or placeholder copy on the site, test checkout development-only, founder contacts only on the listing page.
 3b. Deploys to Vercel via `vercel.json` + `api/index.py`; keep root `requirements.txt` in sync with `backend/pyproject.toml`.
 4. Dark theme only. Accent is sky blue `#38bdf8` via CSS variables. Do not add a light theme or a theme toggle.
-5. Keep docs honest: when behaviour changes, update API.md, Rules.md and Changelog.md in the same change.
+5. Keep docs honest: when behaviour changes, update docs/API.md, docs/Rules.md and docs/Changelog.md in the same change. Docs live in `docs/` (git-ignored, local only).
 6. Prefer editing `app/main.py` and the matching page over adding abstractions. This is a small product.
