@@ -49,6 +49,7 @@ export const ClaimHero = forwardRef<ClaimHeroHandle, Props>(function ClaimHero(
   const [deal, setDeal] = useState('')
   const [coupon, setCoupon] = useState('')
   const [email, setEmail] = useState('')
+  const [phone, setPhone] = useState('')
   const [terms, setTerms] = useState(false)
   const [quote, setQuote] = useState<Quote | null>(null)
   const [busy, setBusy] = useState(false)
@@ -114,9 +115,13 @@ export const ClaimHero = forwardRef<ClaimHeroHandle, Props>(function ClaimHero(
   const min =
     quote?.min_paise ??
     (board === 'deals' ? meta?.pricing.min_new_deal ?? 900 : meta?.pricing.min_new ?? 900)
+  // A valid 10-digit Indian mobile, pre-filled into Razorpay so the buyer skips the contact step.
+  const phoneDigits = phone.replace(/\D/g, '')
+  const phoneValid = /^[6-9]\d{9}$/.test(phoneDigits)
   const valid =
     !!url.trim() &&
     !!cat &&
+    phoneValid &&
     amount !== null &&
     amount >= min &&
     terms &&
@@ -153,6 +158,7 @@ export const ClaimHero = forwardRef<ClaimHeroHandle, Props>(function ClaimHero(
           description: `GoCrazy advertising – ${claim.listing.domain}`,
           accentHex: accent.hex,
           email: email.trim() || undefined,
+          contact: '+91' + phoneDigits,
           onDismiss: () => setCheckout(null),
           onSuccess: async (r) => {
             setCheckout({ kind: 'verifying', claim })
@@ -425,14 +431,29 @@ export const ClaimHero = forwardRef<ClaimHeroHandle, Props>(function ClaimHero(
               <span className="text-accent" aria-hidden> *</span>. Paid advertising placement, no refunds.
             </span>
           </label>
-          <input
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            type="email"
-            placeholder="Receipt & lead inquiries email"
-            aria-label="Email"
-            className="h-8.5 w-full rounded-full bg-surface/95 backdrop-blur-md px-3 text-[12.5px] font-medium text-ink hairline placeholder:text-ink-3 outline-none focus:border-accent/40 sm:w-64"
-          />
+          <div className="flex w-full flex-col gap-2 sm:w-64">
+            <div className="relative">
+              <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[12.5px] font-medium text-ink-3">+91</span>
+              <input
+                value={phone}
+                onChange={(e) => setPhone(e.target.value.replace(/[^\d]/g, '').slice(0, 10))}
+                inputMode="numeric"
+                autoComplete="tel"
+                placeholder="Mobile number *"
+                aria-label="Mobile number (required for payment)"
+                aria-required="true"
+                className="h-8.5 w-full rounded-full bg-surface/95 backdrop-blur-md pl-11 pr-3 text-[12.5px] font-medium text-ink hairline placeholder:text-ink-3 outline-none focus:border-accent/40"
+              />
+            </div>
+            <input
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              type="email"
+              placeholder="Receipt email (optional)"
+              aria-label="Email"
+              className="h-8.5 w-full rounded-full bg-surface/95 backdrop-blur-md px-3 text-[12.5px] font-medium text-ink hairline placeholder:text-ink-3 outline-none focus:border-accent/40"
+            />
+          </div>
         </div>
 
         <p className="text-lift mt-2 text-center text-[12px] font-medium text-ink-2 sm:text-left"><span className="text-accent">*</span> Required</p>

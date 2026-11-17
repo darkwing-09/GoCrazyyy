@@ -18,13 +18,13 @@ export type CheckoutResponse = { razorpay_payment_id: string; razorpay_order_id:
 
 export async function openCheckout(o: {
   keyId: string; orderId: string; amountPaise: number; title: string; description: string; accentHex: string
-  email?: string; onSuccess: (r: CheckoutResponse) => void; onDismiss: () => void
+  email?: string; contact?: string; onSuccess: (r: CheckoutResponse) => void; onDismiss: () => void
 }) {
   await loadRazorpay()
   const rzp = new window.Razorpay!({
     key: o.keyId, order_id: o.orderId, amount: o.amountPaise, currency: 'INR',
     name: 'GoCrazy', description: o.description, image: `${location.origin}/favicon.svg`,
-    prefill: o.email ? { email: o.email } : undefined,
+    prefill: { email: o.email || undefined, contact: o.contact || undefined },
     notes: { listing: o.title },
     theme: { color: o.accentHex, backdrop_color: 'rgba(9,9,11,0.85)' },
     modal: { ondismiss: o.onDismiss },
