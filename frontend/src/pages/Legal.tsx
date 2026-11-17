@@ -13,7 +13,7 @@ function Doc({ title, lede, children }: { title: string; lede?: string; children
         <div className="mt-8 space-y-8 text-[15px] leading-relaxed text-ink-2 [&_h2]:display [&_h2]:text-lg [&_h2]:font-semibold [&_h2]:text-ink [&_h2]:mb-2 [&_li]:mt-1 [&_ul]:list-disc [&_ul]:pl-5 [&_strong]:text-ink">
           {children}
         </div>
-        <p className="mt-12 text-[12.5px] text-ink-3">Last updated 17 November 2026 · <Link to="/contact" className="hover:text-ink">Contact</Link></p>
+        <p className="mt-12 text-[12.5px] font-medium text-ink-3">Last updated 17 November 2026 · <Link to="/contact" className="hover:text-ink">Contact</Link></p>
       </article>
     </PageShell>
   )
@@ -67,7 +67,7 @@ const FAQS: [string, ReactNode][] = [
   ['Does my listing expire?', 'No. All-time totals are kept forever.'],
   ['How many listings can I have?', 'One per domain or handle. Paying again for the same domain raises that listing.'],
   ['Can I change my category, title or description?', 'Title and description are read from your page; update the page and contact us to re-fetch. Category changes are by request.'],
-  ['Where do the visitor numbers come from?', 'From our DataFast analytics, via the API, cached for a minute. Clicks per listing are counted by our own redirect.'],
+  ['Where do the visitor numbers come from?', 'Site traffic is measured by DataFast, an independent analytics service, and updated every minute. Clicks on each listing are counted by our own redirect and tagged with utm_source=gocrazy so you can verify them.'],
   ['Can you remove my listing?', 'Yes, on request, without refund. We also remove listings that break the rules.'],
   ['How do I contact you?', <>Through the <Link to="/contact" className="text-accent">contact page</Link>.</>],
 ]
@@ -91,9 +91,12 @@ export function FAQ() {
 }
 
 export function Terms() {
+  const { meta } = useAppData()
+  const name = meta?.business.name ?? 'GoCrazy'
+  const city = meta?.business.jurisdiction
   return (
     <Doc title="Terms of service" lede="Plain-language terms. By claiming a rank you agree to them.">
-      <section><h2>1. What this is</h2><p>GoCrazy sells paid placements on public leaderboards. Every listing is an advertisement and is labelled as one. We do not endorse any listed product.</p></section>
+      <section><h2>1. What this is</h2><p>{name} operates GoCrazy and sells paid placements on public leaderboards. Every listing is an advertisement and is labelled as one. We do not endorse any listed product.</p></section>
       <section><h2>2. Who can buy</h2><p>You must be 18 or older and able to enter a contract. If you list on behalf of a company, you confirm you are allowed to.</p></section>
       <section><h2>3. Payments and taxes</h2><p>Prices are in Indian rupees and processed by Razorpay. The price shown includes GST where it applies. You are responsible for any other taxes. Payments add to your listing's total and are never returned.</p></section>
       <section><h2>4. No refunds</h2><p>The placement is delivered the instant a payment is captured, so there are no refunds, including when your rank is later overtaken or your listing is removed for breaking the rules. See the <Link to="/refunds" className="text-accent">Refund policy</Link>.</p></section>
@@ -102,15 +105,14 @@ export function Terms() {
       <section><h2>7. Removal</h2><p>We may remove or re-categorise any listing at any time, with or without reason, without refund. You may ask us to remove your listing; totals are not refunded.</p></section>
       <section><h2>8. Warranties and liability</h2><p>The service is provided as is. We do not promise any amount of traffic, clicks or sales. To the extent allowed by law our liability is limited to the amount you paid in the previous 30 days.</p></section>
       <section><h2>9. Emails</h2><p>If you give an email we use it for the receipt and for service messages about your listing. No marketing without consent.</p></section>
-      <section><h2>10. Governing law</h2><p>These terms are governed by the laws of India. Disputes go to the courts of the city named on the <Link to="/contact" className="text-accent">contact page</Link>.</p></section>
-      <p className="text-[13px] text-ink-3">This is a starting draft and not legal advice. Have a lawyer review it before launch.</p>
+      <section><h2>10. Governing law</h2><p>These terms are governed by the laws of India.{city ? <> The courts of {city} have exclusive jurisdiction.</> : <> Disputes are subject to the courts of competent jurisdiction in India.</>}</p></section>
     </Doc>
   )
 }
 
 export function Refunds() {
   return (
-    <Doc title="Refund and cancellation policy" lede="Required for Razorpay activation and for your own clarity.">
+    <Doc title="Refund and cancellation policy" lede="How payments, refunds and cancellations work on GoCrazy.">
       <section><h2>No refunds</h2><p>A placement is delivered the moment your payment is captured: your listing appears at its rank immediately. Because the service is consumed instantly, payments are not refundable and cannot be cancelled.</p></section>
       <section><h2>Failed or duplicate charges</h2><p>If money left your account but your rank did not appear within 15 minutes, contact us with the Razorpay payment id. Genuine failed captures are reversed by Razorpay automatically, usually within 5 to 7 working days. If a technical fault on our side double-charged you, we refund the duplicate.</p></section>
       <section><h2>Removed listings</h2><p>Listings removed for breaking the rules are not refunded.</p></section>
@@ -127,7 +129,7 @@ export function Privacy() {
         <li><strong>Analytics</strong>: page views and a visitor identifier set by DataFast's script, used to count visitors and attribute revenue. Click-throughs on listings are logged by our redirect.</li>
       </ul></section>
       <section><h2>How we use it</h2><p>To show the leaderboard, send receipts, prevent abuse, and publish aggregate traffic numbers. We do not sell personal data.</p></section>
-      <section><h2>Cookies</h2><p>DataFast sets a first-party analytics cookie. Your accent colour choice is stored in your browser only.</p></section>
+      <section><h2>Cookies</h2><p>DataFast sets a first-party analytics cookie. Your light or dark theme choice is stored in your browser only.</p></section>
       <section><h2>Your rights (DPDP Act 2023)</h2><p>You may ask what personal data we hold, ask for corrections, or ask for deletion of your contact details. Listing totals are a public record of payments and are retained. Write to us via the <Link to="/contact" className="text-accent">contact page</Link>.</p></section>
       <section><h2>Processors</h2><p>Razorpay (payments), DataFast (analytics), and our hosting provider.</p></section>
     </Doc>
@@ -135,12 +137,14 @@ export function Privacy() {
 }
 
 export function Contact() {
+  const { meta } = useAppData()
   const [copied, setCopied] = useState(false)
   useEffect(() => { if (copied) { const t = setTimeout(() => setCopied(false), 1500); return () => clearTimeout(t) } }, [copied])
-  const email = 'hello@gocrazy.example'
+  const b = meta?.business
   return (
-    <Doc title="Contact" lede="One founder, one inbox. Replies within a working day.">
-      <section><h2>Email</h2><p><button onClick={() => navigator.clipboard.writeText(email).then(() => setCopied(true))} className="font-mono text-accent hover:underline">{email}</button> {copied && <span className="text-ink-3">copied</span>}</p><p className="mt-1 text-[13px] text-ink-3">Replace with the real address and registered business name and city before launch. Razorpay needs a reachable contact page.</p></section>
+    <Doc title="Contact" lede="We reply within one working day.">
+      {b?.email && <section><h2>Email</h2><p><a href={`mailto:${b.email}`} className="font-mono text-accent hover:underline">{b.email}</a> <button onClick={() => navigator.clipboard.writeText(b.email!).then(() => setCopied(true))} className="ml-2 text-[13px] font-medium text-ink-2 hover:text-ink">{copied ? 'Copied' : 'Copy'}</button></p></section>}
+      {(b?.name || b?.address) && <section><h2>Business</h2><p className="whitespace-pre-line"><strong>{b?.name}</strong>{b?.address && <><br />{b.address}</>}</p></section>}
       <section><h2>For payment issues</h2><p>Send the Razorpay payment id (starts with <code>pay_</code>), the listing URL and the amount.</p></section>
       <section><h2>For takedowns</h2><p>Send the listing URL and the reason. Rule-breaking listings come down the same day.</p></section>
     </Doc>

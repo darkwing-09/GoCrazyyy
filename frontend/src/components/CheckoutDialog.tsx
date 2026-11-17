@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { AnimatePresence, motion } from 'motion/react'
-import { Loader2, ShieldCheck, X, Trophy } from 'lucide-react'
+import { Loader2, X, Trophy } from 'lucide-react'
 import { Button } from './Button'
 import type { ClaimResult, PayResult } from '@/lib/api'
 import { rupees } from '@/lib/format'
@@ -23,19 +23,18 @@ export function CheckoutDialog({ state, onClose, onMockPay }: { state: CheckoutS
             {state.kind !== 'verifying' && <button onClick={onClose} aria-label="Close" className="absolute top-4 right-4 rounded-full p-1.5 text-ink-3 hover:bg-accent-subtle hover:text-ink"><X className="size-4" /></button>}
             <div className="flex items-center gap-3">
               <img src={state.claim.listing.favicon ?? ''} alt="" className="size-10 rounded-xl bg-line-strong ring-1 ring-line-strong" />
-              <div className="min-w-0"><p className="truncate font-semibold">{state.claim.listing.title}</p><p className="text-[12.5px] text-ink-3">{state.claim.listing.domain}</p></div>
+              <div className="min-w-0"><p className="truncate font-semibold">{state.claim.listing.title}</p><p className="text-[12.5px] font-medium text-ink-3">{state.claim.listing.domain}</p></div>
             </div>
 
             {state.kind === 'mock' && (
               <div className="mt-5">
-                <p className="text-[14px] text-ink-2">Razorpay keys are not configured, so this is a <span className="text-ink">local mock checkout</span>. Nothing is charged.</p>
-                <dl className="mt-4 grid grid-cols-2 gap-2 text-[13px]">
+                <p className="text-[14px] text-ink-2"><span className="text-ink">Test mode.</span> No money is charged.</p>
+                <dl className="mt-4 grid grid-cols-2 gap-2 text-[13px] font-medium">
                   <dt className="text-ink-3">Amount</dt><dd className="tnum text-right font-mono">{rupees(state.claim.amount_paise)}</dd>
                   <dt className="text-ink-3">Lands at</dt><dd className="text-right text-accent">#{state.claim.projected_rank}</dd>
                   <dt className="text-ink-3">Running total</dt><dd className="tnum text-right font-mono">{rupees(state.claim.projected_total_paise)}</dd>
                 </dl>
-                <Button className="mt-5 w-full" size="lg" onClick={() => onMockPay(state.claim)}>Simulate successful payment</Button>
-                <p className="mt-3 flex items-center justify-center gap-1.5 text-[11.5px] text-ink-3"><ShieldCheck className="size-3.5" />Add RAZORPAY_KEY_ID and secret to backend/.env for the real checkout.</p>
+                <Button className="mt-5 w-full" size="lg" onClick={() => onMockPay(state.claim)}>Complete test payment</Button>
               </div>
             )}
             {state.kind === 'verifying' && (
@@ -55,7 +54,7 @@ export function CheckoutDialog({ state, onClose, onMockPay }: { state: CheckoutS
             {state.kind === 'error' && (
               <div className="mt-5">
                 <p className="text-[14px] text-[#ff8a8a]">{state.message}</p>
-                <p className="mt-2 text-[12.5px] text-ink-3">If money left your account, the Razorpay webhook will still record it within a minute. Contact us with the payment id if your rank does not appear.</p>
+                <p className="mt-2 text-[12.5px] font-medium text-ink-3">If money left your account, the Razorpay webhook will still record it within a minute. Contact us with the payment id if your rank does not appear.</p>
                 <Button variant="outline" className="mt-4 w-full" onClick={onClose}>Close</Button>
               </div>
             )}

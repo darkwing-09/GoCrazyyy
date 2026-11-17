@@ -5,7 +5,11 @@ import path from 'node:path'
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
-  resolve: { alias: { '@': path.resolve(__dirname, 'src') } },
+  resolve: { alias: { '@': path.resolve(import.meta.dirname, 'src') } },
+  build: {
+    // The 3D tubes chunk (~210 kB gzip) is lazy-loaded after first paint; the app shell stays under the limit.
+    chunkSizeWarningLimit: 800,
+  },
   server: {
     port: 5173,
     proxy: {

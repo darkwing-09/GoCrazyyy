@@ -23,7 +23,7 @@ export function Home({ tab }: { tab: Tab }) {
   const { slug = null } = useParams()
   const [sp, setSp] = useSearchParams()
   const page = Math.max(1, Number(sp.get('page') ?? 1))
-  const { categories, refreshStats } = useAppData()
+  const { categories, refreshStats, meta } = useAppData()
   const [home, setHome] = useState<HomeData | null>(null)
   const [boardPage, setBoardPage] = useState<BoardPage | null>(null)
   const [loading, setLoading] = useState(true)
@@ -59,10 +59,10 @@ export function Home({ tab }: { tab: Tab }) {
       <CategoryRail active={slug} suffix={tab === 'alltime' ? '' : tab} />
       <BoardTabs active={tab} category={slug} />
       {tab === 'deals' && (
-        <p className="mt-5 text-center text-[13px] text-ink-3">Deals must include a real discount. The board resets every quarter; the current one closes <Countdown to="2026-12-31T18:29:59Z" />.</p>
+        <p className="mt-5 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-center text-[13px] font-medium text-ink-2">Every deal must offer a real discount.{meta?.deals_closes_at && <> This board closes in <Countdown to={meta.deals_closes_at} /></>}</p>
       )}
       {tab === 'today' && (
-        <p className="mt-5 flex items-center justify-center gap-2 text-center text-[13px] text-ink-3">Spend since midnight IST. Resets in <Countdown to={nextMidnightIST()} /></p>
+        <p className="mt-5 flex items-center justify-center gap-2 text-center text-[13px] font-medium text-ink-2">Spend since midnight IST. Resets in <Countdown to={nextMidnightIST()} /></p>
       )}
       <ClaimHero ref={hero} board={board} category={slug} takeTopPaise={takeTop} onPaid={() => { load(); refreshStats() }} onAmountChange={setOffer} />
 
@@ -83,9 +83,9 @@ export function Home({ tab }: { tab: Tab }) {
           )}
           {pages > 1 && (
             <nav className="mt-6 flex items-center justify-center gap-2 text-[13px]" aria-label="Pagination">
-              <button disabled={page <= 1} onClick={() => setSp({ page: String(page - 1) })} className="rounded-full px-3 py-1.5 text-ink-2 hairline disabled:opacity-30">← Prev</button>
-              <span className="tnum text-ink-3">Page {page} of {pages} · {total} listings</span>
-              <button disabled={page >= pages} onClick={() => setSp({ page: String(page + 1) })} className="rounded-full px-3 py-1.5 text-ink-2 hairline disabled:opacity-30">Next →</button>
+              <button disabled={page <= 1} onClick={() => setSp({ page: String(page - 1) })} className="rounded-full px-3 py-1.5 text-ink-2 hairline enabled:hover:text-ink disabled:cursor-not-allowed disabled:text-ink-3">← Prev</button>
+              <span className="tnum font-medium text-ink-3">Page {page} of {pages} · {total} listings</span>
+              <button disabled={page >= pages} onClick={() => setSp({ page: String(page + 1) })} className="rounded-full px-3 py-1.5 text-ink-2 hairline enabled:hover:text-ink disabled:cursor-not-allowed disabled:text-ink-3">Next →</button>
             </nav>
           )}
         </div>

@@ -1,6 +1,6 @@
 # Data model
 
-All amounts are integer paise. All timestamps are UTC (`DateTime(timezone=True)`; SQLite stores them naive).
+All amounts are integer paise. All timestamps are UTC (`DateTime(timezone=True)`; SQLite stores them naive). Production runs on Postgres (Neon via Vercel); tables are created on the first request and only the categories are seeded.
 
 ## categories
 | column | type | notes |
@@ -21,10 +21,12 @@ All amounts are integer paise. All timestamps are UTC (`DateTime(timezone=True)`
 | handle | str? | X handle when listed as `@handle` |
 | title, description, favicon | | fetched from the page; favicon falls back to Google s2 |
 | category_id | fk | |
-| contact_email | str? | from the claim form (DPDP: deletable on request) |
+| contact_email | str? | from the claim form; shown only on the listing's own page (DPDP: deletable on request) |
+| contact_phone | str? | WhatsApp / inquiries number; shown only on the listing's own page |
+| twitter, linkedin | str? | handle or URL, public |
+| location, stage | str? | e.g. "Bengaluru", "Seed"; public |
 | deal_text (≤100), coupon (≤60) | str? | Deals board only |
 | published | bool idx | false until the first capture |
-| is_demo | bool | seeded synthetic rows |
 | created_at, published_at | datetime | `published_at` breaks ties (older wins) |
 
 ## orders
@@ -41,11 +43,11 @@ Razorpay orders (or mock ids) awaiting capture.
 | column | notes |
 | --- | --- |
 | provider_payment_id unique | `pay_…`; idempotency key |
-| provider_order_id | nullable for seeds |
+| provider_order_id | the Razorpay order |
 | listing_id, amount_paise, currency | |
 | board idx | `main` counts for All-time/Today/Daily/Category; `deals` for the Deals board |
 | method | upi/card/netbanking/… |
-| source | `webhook` / `verify` / `mock` / `seed` |
+| source | `webhook` / `verify` / `mock` (development test checkout) |
 | datafast_sent | true once DataFast accepted the payment |
 | captured_at idx | drives all board windows |
 

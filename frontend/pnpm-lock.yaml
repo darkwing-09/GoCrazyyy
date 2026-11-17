@@ -26,6 +26,9 @@ importers:
       react-router-dom:
         specifier: ^7.18.5
         version: 7.18.5(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      threejs-components:
+        specifier: 0.0.19
+        version: 0.0.19
     devDependencies:
       '@tailwindcss/vite':
         specifier: ^4.3.5
@@ -798,6 +801,9 @@ packages:
     resolution: {integrity: sha512-NHFiWnAbMJxNNpBwiO7jJVGDuqMxT9/oV8v57RR+fgBQShkJil5inGD8/xWy0hjLyHQyX1tu27QANhlz3KBqCg==}
     engines: {node: '>=6'}
 
+  threejs-components@0.0.19:
+    resolution: {integrity: sha512-4Zk9StS8nLM07h66g2q5WtZWRDSe5D58W4whCq8MkT95+nidnYS8SNr49kYr44/sfN6NKwz0ibA9APkxKT/dWA==}
+
   tinyglobby@0.2.17:
     resolution: {integrity: sha512-wXR/dYpcqKmfWpEdZjiKJOwCNFndD0DMnrW/cYjVGttEkBfVgcLFHoNrlj47mjOVic9yyNu65alsgF4NQyTa2g==}
     engines: {node: '>=12.0.0'}
@@ -1355,6 +1361,8 @@ snapshots:
   tailwindcss@4.3.5: {}
 
   tapable@2.3.4: {}
+
+  threejs-components@0.0.19: {}
 
   tinyglobby@0.2.17:
     dependencies:

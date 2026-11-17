@@ -1,5 +1,5 @@
 """Resolve a URL or @handle to a listing title, description, favicon and domain."""
-import re
+import ipaddress, re, socket
 from urllib.parse import urlparse, urlunparse
 import httpx
 from bs4 import BeautifulSoup
@@ -27,14 +27,39 @@ def domain_of(url: str) -> str:
     return host[4:] if host.startswith("www.") else host
 
 
+class BlockedURL(ValueError):
+    pass
+
+
+def _assert_public(url: str) -> None:
+    """Refuse URLs that point at private, loopback or link-local addresses (SSRF guard)."""
+    p = urlparse(url)
+    if p.scheme not in ("http", "https") or not p.hostname:
+        raise BlockedURL("Only public http(s) URLs can be listed.")
+    try:
+        infos = socket.getaddrinfo(p.hostname, p.port or (443 if p.scheme == "https" else 80))
+    except socket.gaierror:
+        raise BlockedURL("That domain does not resolve.")
+    for info in infos:
+        ip = ipaddress.ip_address(info[4][0])
+        if ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved or ip.is_multicast or ip.is_unspecified:
+            raise BlockedURL("That URL is not publicly reachable.")
+
+
 async def resolve(raw: str) -> dict:
     url, handle = normalise(raw)
     title, desc, icon, final = None, "", None, url
     if handle:
         return {"url": url, "handle": handle, "domain": "x.com", "title": f"@{handle}",
                 "description": f"@{handle} on X", "favicon": f"https://unavatar.io/x/{handle}"}
+    _assert_public(url)
+
+    async def _guard(request: httpx.Request):
+        _assert_public(str(request.url))  # every redirect hop is checked too
+
     try:
-        async with httpx.AsyncClient(follow_redirects=True, timeout=8, headers={"User-Agent": UA}) as c:
+        async with httpx.AsyncClient(follow_redirects=True, timeout=8, headers={"User-Agent": UA},
+                                     event_hooks={"request": [_guard]}, max_redirects=5) as c:
             r = await c.get(url)
             final = str(r.url).split("?")[0].split("#")[0]  # resolves shorteners too
             if "text/html" in r.headers.get("content-type", ""):
@@ -47,6 +72,8 @@ async def resolve(raw: str) -> dict:
                 link = soup.find("link", rel=lambda v: v and "icon" in v)
                 if link and link.get("href"):
                     icon = httpx.URL(final).join(link["href"]).__str__()
+    except BlockedURL:
+        raise
     except Exception:
         pass
     dom = domain_of(final)

@@ -94,7 +94,7 @@ export function Product() {
                 {p.title}
               </h1>
 
-              <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] text-ink-3">
+              <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] font-medium text-ink-3">
                 <Link
                   to={`/category/${p.category.slug}`}
                   className="inline-flex items-center gap-1 text-ink-2 hover:text-accent transition-colors"
@@ -107,13 +107,7 @@ export function Product() {
                 <span>·</span>
                 <span>listed {timeAgo(p.published_at)}</span>
                 <span>·</span>
-                <span className="tnum">{count(p.clicks)} clicks</span>
-                {p.is_demo && (
-                  <>
-                    <span>·</span>
-                    <span className="rounded bg-line-strong px-1.5 py-0.5 text-[11px]">demo</span>
-                  </>
-                )}
+                <span className="tnum">{count(p.clicks)} {p.clicks === 1 ? 'click' : 'clicks'}</span>
               </div>
             </div>
           </div>
@@ -250,15 +244,15 @@ export function Product() {
         <aside className="space-y-5 lg:sticky lg:top-20 lg:self-start">
           {/* Rank & Outrank Card */}
           <div
-            className="rounded-3xl bg-surface/80 p-5.5 backdrop-blur-xl hairline shadow-md"
+            className="rounded-3xl bg-surface/95 p-5.5 backdrop-blur-xl hairline shadow-md"
             style={{ boxShadow: 'inset 0 0 0 1px var(--accent-subtle), var(--accent-glow)' }}
           >
-            <div className="text-[12px] font-medium text-ink-3">Overall rank</div>
+            <div className="text-[12px] font-semibold text-ink-3">Overall rank</div>
             <div className="display tnum mt-1 text-4xl font-extrabold text-accent">
               #{p.overall.rank ?? '—'}
-              <span className="ml-1 text-base font-normal text-ink-3">of {p.overall.of}</span>
+              <span className="ml-1 text-base font-medium text-ink-3">of {p.overall.of}</span>
             </div>
-            <div className="mt-3 text-[12px] font-medium text-ink-3">Total paid (Ad Spend)</div>
+            <div className="mt-3 text-[12px] font-semibold text-ink-3">Total paid (Ad Spend)</div>
             <div className="tnum font-mono text-xl font-bold">{rupees(p.total_paise)}</div>
             {outrank && (
               <Link to={`/?claim=${outrank}`}>
@@ -269,7 +263,7 @@ export function Product() {
 
           {/* Startup Contacts & Inquiries Card */}
           {hasContacts && (
-            <div className="rounded-3xl bg-surface/75 p-5 backdrop-blur-xl hairline shadow-sm space-y-3">
+            <div className="rounded-3xl bg-surface/95 p-5 backdrop-blur-xl hairline shadow-sm space-y-3">
               <h2 className="flex items-center gap-2 text-[13px] font-bold text-ink">
                 <MessageSquare className="size-4 text-accent" />
                 Startup & Founder Contacts
@@ -278,7 +272,7 @@ export function Product() {
               <ul className="space-y-2 text-[12.5px]">
                 {p.location && (
                   <li className="flex items-center justify-between text-ink-2">
-                    <span className="flex items-center gap-1.5 text-ink-3">
+                    <span className="flex items-center gap-1.5 font-medium text-ink-3">
                       <MapPin className="size-3.5 text-accent" /> Location
                     </span>
                     <span className="font-medium text-ink">{p.location}</span>
@@ -287,7 +281,7 @@ export function Product() {
 
                 {p.stage && (
                   <li className="flex items-center justify-between text-ink-2">
-                    <span className="flex items-center gap-1.5 text-ink-3">
+                    <span className="flex items-center gap-1.5 font-medium text-ink-3">
                       <Rocket className="size-3.5 text-accent" /> Stage
                     </span>
                     <span className="font-medium text-accent">{p.stage}</span>
@@ -296,7 +290,7 @@ export function Product() {
 
                 {p.twitter && (
                   <li className="flex items-center justify-between text-ink-2">
-                    <span className="flex items-center gap-1.5 text-ink-3">
+                    <span className="flex items-center gap-1.5 font-medium text-ink-3">
                       <XIcon className="size-3.5 text-accent" /> X (Twitter)
                     </span>
                     <a
@@ -312,7 +306,7 @@ export function Product() {
 
                 {p.linkedin && (
                   <li className="flex items-center justify-between text-ink-2">
-                    <span className="flex items-center gap-1.5 text-ink-3">
+                    <span className="flex items-center gap-1.5 font-medium text-ink-3">
                       <LinkedInIcon className="size-3.5 text-accent" /> LinkedIn
                     </span>
                     <a
@@ -328,7 +322,7 @@ export function Product() {
 
                 {p.contact_email && (
                   <li className="flex items-center justify-between text-ink-2">
-                    <span className="flex items-center gap-1.5 text-ink-3">
+                    <span className="flex items-center gap-1.5 font-medium text-ink-3">
                       <Mail className="size-3.5 text-accent" /> Email
                     </span>
                     <a
@@ -342,7 +336,7 @@ export function Product() {
 
                 {p.contact_phone && (
                   <li className="flex items-center justify-between text-ink-2">
-                    <span className="flex items-center gap-1.5 text-ink-3">
+                    <span className="flex items-center gap-1.5 font-medium text-ink-3">
                       <Phone className="size-3.5 text-accent" /> WhatsApp
                     </span>
                     <a
@@ -360,7 +354,7 @@ export function Product() {
           )}
 
           {/* Payment History Card */}
-          <div className="rounded-3xl bg-surface/75 p-5 backdrop-blur-xl hairline shadow-sm">
+          <div className="rounded-3xl bg-surface/95 p-5 backdrop-blur-xl hairline shadow-sm">
             <h2 className="text-[13px] font-bold text-ink">Payment history</h2>
             <ol className="mt-2.5 space-y-1.5 text-[12.5px]">
               {p.ledger.map((e, i) => (

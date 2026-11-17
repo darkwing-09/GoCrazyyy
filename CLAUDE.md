@@ -15,10 +15,10 @@ GoCrazy: pay-to-rank leaderboard for Indian startups. FastAPI backend in `backen
 - Every placement is a paid advertisement and is labelled as such in the UI. Do not remove the label.
 
 ## Frontend conventions
-- Design tokens are CSS variables in `src/index.css`; the accent is `oklch(var(--accent-l) var(--accent-c) var(--accent-h))` and is switched by `ThemeProvider`. Never hard-code the accent colour.
+- Design tokens are CSS variables in `src/index.css`. Dark theme only (no light theme, no toggle). One brand accent, sky blue `#38bdf8`; use `var(--accent)` and its `-subtle/-muted` variants rather than repeating the hex.
 - Motion: `motion/react`. One grammar: rise + unblur with `[0.16, 1, 0.3, 1]`. Respect `useTheme().reducedMotion`.
 - Icons: lucide only, `strokeWidth={1.75}`. No emoji as icons.
-- Fonts: Bricolage Grotesque (display, class `display`), Geist (body), Geist Mono (amounts, class `tnum`).
+- Fonts: Bricolage Grotesque (display, class `display`), Schibsted Grotesk (body), Spline Sans Mono (amounts, class `tnum`).
 - Path alias `@/` maps to `frontend/src`.
 - Run `npx tsc -b` before claiming the frontend compiles.
 
@@ -29,6 +29,14 @@ GoCrazy: pay-to-rank leaderboard for Indian startups. FastAPI backend in `backen
 
 ## Design workflow
 This project uses the impeccable skill. PRODUCT.md holds product truth; `.impeccable/briefs/home.md` holds the direction contract; DESIGN.md (when present) holds the token system. Refinements keep the committed world; do not re-roll the direction.
+
+## Production rules
+- Claim form: mark required fields with `*`; optional startup details open only after URL and category are filled.
+- Never seed listings or payments. Only categories are seeded (`seed_categories`).
+- Never show placeholder, demo or "draft" wording on the site. Business details come from env via `/api/meta`.
+- The test checkout must stay development-only (`settings.mock_payments_allowed`).
+- Founder email and phone appear only on a listing's own page (`listing_out(..., contacts=True)`).
+- Deployment is Vercel: `vercel.json`, `api/index.py`, root `requirements.txt` (keep it in sync with `backend/pyproject.toml`).
 
 ## Do not
 - Do not commit `backend/.env`, `backend/gocrazy.db`, or anything under `.impeccable/review`.

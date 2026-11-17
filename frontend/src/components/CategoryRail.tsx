@@ -38,7 +38,7 @@ export function CategoryRail({ active, suffix = '' }: { active: string | null; s
     <div className="relative mt-4">
       <div
         ref={ref}
-        className="flex gap-1.5 overflow-x-auto rounded-full bg-surface/75 p-1.5 backdrop-blur-xl hairline shadow-sm [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="flex gap-1.5 overflow-x-auto rounded-full bg-surface/95 p-1.5 backdrop-blur-xl hairline shadow-sm [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {chip(`/${suffix}`.replace(/\/$/, '') || '/', 'All', <LayoutGrid className="size-3.5" strokeWidth={2} />, active === null)}
         {categories.map((c) =>

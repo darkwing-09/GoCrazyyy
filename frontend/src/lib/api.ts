@@ -1,7 +1,7 @@
 export type Category = { slug: string; name: string; icon: string }
 export type Listing = {
   rank: number; slug: string; title: string; description: string; url: string; domain: string
-  favicon: string | null; category: Category; total_paise: number; clicks: number; is_demo: boolean
+  favicon: string | null; category: Category; total_paise: number; clicks: number
   published_at: string; last_paid_at: string | null; deal_text: string | null; coupon: string | null
   take_price_paise: number | null
   contact_email?: string | null
@@ -14,8 +14,9 @@ export type Listing = {
 export type Activity = { slug: string; title: string; favicon: string | null; amount_paise: number; at: string; board: string; category: Category }
 export type Board = 'alltime' | 'today' | 'deals' | 'daily'
 export type Meta = {
-  payments_mode: 'razorpay' | 'mock'; razorpay_key_id: string | null; datafast_website_id: string | null
-  datafast_domain: string | null; public_stats_url: string | null; launched_at: string
+  payments_mode: 'razorpay' | 'mock'; payments_available: boolean; razorpay_key_id: string | null; datafast_website_id: string | null
+  datafast_domain: string | null; public_stats_url: string | null; launched_at: string | null; deals_closes_at: string | null
+  business: { name: string; email: string | null; address: string | null; jurisdiction: string | null }
   pricing: { min_new: number; take_top_bump: number; rank_bump: number; min_raise: number; step: number; max: number; min_new_deal: number; take_top_bump_deal: number }
 }
 export type Home = {
@@ -26,7 +27,7 @@ export type Home = {
 }
 export type BoardPage = { board: Board; category: string | null; day: string | null; total: number; page: number; pages: number; items: Listing[]; take_top_paise: number; activity: Activity[] }
 export type Quote = { rank: number; min_paise: number; projected_total_paise: number; take_top_paise: number; existing: { slug: string; title: string; current_rank: number | null; total_paise: number } | null }
-export type Stats = { source: string; online: number | null; visitors_today: number | null; visitors_total: number | null; revenue_paise: number; revenue_source: string; products: number; public_stats_url: string | null; demo: boolean }
+export type Stats = { source: string; online: number | null; visitors_today: number | null; visitors_total: number | null; revenue_paise: number; revenue_source: string; products: number; public_stats_url: string | null }
 export type CategoryCard = Category & { claims: number; last_claim_at: string | null; top: Listing[]; take_top_paise: number }
 export type Product = Listing & {
   overall: { rank: number | null; of: number; outrank_paise: number | null }

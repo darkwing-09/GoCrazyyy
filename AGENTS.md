@@ -18,6 +18,8 @@ cd backend && uv run pytest        # see TestPlan.md
 1. Paise integers only. Rank = SUM of captured payments. Idempotent capture via `record_capture`.
 2. Signature-verify every Razorpay callback and webhook on the raw body.
 3. DataFast key is server-only.
-4. Accent colour comes from CSS variables; never hard-code it.
+3a. No seeded listings, no demo or placeholder copy on the site, test checkout development-only, founder contacts only on the listing page.
+3b. Deploys to Vercel via `vercel.json` + `api/index.py`; keep root `requirements.txt` in sync with `backend/pyproject.toml`.
+4. Dark theme only. Accent is sky blue `#38bdf8` via CSS variables. Do not add a light theme or a theme toggle.
 5. Keep docs honest: when behaviour changes, update API.md, Rules.md and Changelog.md in the same change.
 6. Prefer editing `app/main.py` and the matching page over adding abstractions. This is a small product.

@@ -1,7 +1,22 @@
-import { DynamicIcon, type IconName } from 'lucide-react/dynamic'
+import {
+  Backpack, BarChart3, Bitcoin, Bot, Briefcase, Building2, Code2, Gamepad2, Globe, GraduationCap, HeartPulse, Home,
+  IndianRupee, Kanban, ListChecks, MapPin, Megaphone, Mic, Palette, PenLine, Rocket, Scale, Search, Share2, ShieldCheck,
+  ShoppingBag, Sparkles, Target, Trophy, UserRound, WandSparkles, type LucideIcon,
+} from 'lucide-react'
+
+/** Category icons by lucide name, as stored in categories.icon. Static imports keep the bundle to these 30 icons. */
+const CATEGORY_ICONS: Record<string, LucideIcon> = {
+  bot: Bot, search: Search, megaphone: Megaphone, 'bar-chart-3': BarChart3, bitcoin: Bitcoin, 'code-2': Code2,
+  scale: Scale, 'shield-check': ShieldCheck, 'heart-pulse': HeartPulse, 'share-2': Share2, trophy: Trophy,
+  briefcase: Briefcase, 'graduation-cap': GraduationCap, 'building-2': Building2, 'shopping-bag': ShoppingBag,
+  globe: Globe, 'gamepad-2': Gamepad2, 'user-round': UserRound, 'list-checks': ListChecks, kanban: Kanban,
+  palette: Palette, 'pen-line': PenLine, rocket: Rocket, 'wand-sparkles': WandSparkles, mic: Mic, target: Target,
+  'map-pin': MapPin, home: Home, backpack: Backpack, 'indian-rupee': IndianRupee,
+}
 
 export function CatIcon({ name, className = 'size-4' }: { name: string; className?: string }) {
-  return <DynamicIcon name={name as IconName} className={className} strokeWidth={1.75} aria-hidden />
+  const Icon = CATEGORY_ICONS[name] ?? Sparkles
+  return <Icon className={className} strokeWidth={1.75} aria-hidden />
 }
 
 export function LinkedInIcon({ className = 'size-4' }: { className?: string }) {

@@ -23,15 +23,20 @@ How the main pieces were built, with the non-obvious bits called out.
 - One `Home` component serves six routes (board × category). React Router keeps them under one `AnimatePresence` key so the shell does not re-animate on tab switch; only the data changes.
 - `ClaimHero` exposes `prefill()` through a ref so rows and the product page can set the amount without prop drilling.
 - The accent is `oklch(L C H)` split into three variables; `ThemeProvider` writes them on `:root` and persists the id in `localStorage`. Every accent use in CSS derives from those three numbers (`--accent-12/20/40`, `--accent-glow`).
-- `Background` is a 2D canvas doing a perspective projection of ~220 points plus a radial horizon glow; pointer position moves the camera, scroll pushes the field. It skips the animation loop under reduced motion and when the tab is hidden. `#root { isolation: isolate }` keeps it beneath the page content but above the ground.
+- `Background` lazy-loads the threejs-components `tubes1` cursor effect (WebGL2/WebGPU with bloom) into the first viewport only. Tubes follow the cursor; when the pointer is elsewhere they trace an infinity loop (x = cos 0.9t, y = sin 1.8t, sized to 34% of the viewport width) with long trails: 260–340 points per tube and a fixed 9.1 ms lag per point (4.4 ms while following), applied each frame as f = dt / (lag + dt) so length does not depend on refresh rate. A click on empty hero space cycles four on-brand palettes. The library pauses itself off-screen and on hidden tabs; pixel ratio is capped at 1.5. Reduced motion or no WebGL leaves a static accent glow.
+- The claim form marks required fields with `*` and reveals the optional startup-details fieldset once `url` and `category` are set (`detailsOpen` in `ClaimHero`).
+- Category icons come from a static map of 30 lucide icons (`Icon.tsx`); the dynamic loader produced ~2,000 chunks.
 - Rows use a `.spot` pseudo-element whose radial gradient follows `--mx/--my`, set on `pointermove`.
 - Tabular numerals (`.tnum`) and the mono face on every amount keep columns aligned.
 
-## Seed data
-`seed.py` creates 30 categories and ~48 listings with 1–5 cumulative payments each, plus four payments stamped today so the Today board is not empty. Every row is `is_demo=true`; `/api/stats` reports `demo: true` while any is published.
+## Data
+Only the 30 categories are seeded, idempotently, on each cold start (`seed.seed_categories`). Listings and payments come only from real claims. The local test checkout records payments with `source='mock'` and is disabled in production.
+
+## Vercel
+`api/index.py` puts `backend/` on `sys.path` and exposes the FastAPI `app`. The database is initialised at import (the Python runtime does not reliably fire ASGI startup events). On Vercel the engine uses `NullPool`; SQLite is refused.
 
 ## Known shortcuts
-- No migrations; `create_all` on startup.
+- No migrations; `create_all` on cold start.
 - No admin UI.
 - Fonts from Google Fonts rather than self-hosted.
 - Google's favicon service for icons when the page has none.

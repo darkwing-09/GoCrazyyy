@@ -58,25 +58,28 @@ export const Button = forwardRef<HTMLButtonElement, Props>(function Button(
       transition={{ type: 'spring', stiffness: 400, damping: 25 }}
       className={clsx(
         'group relative inline-flex items-center justify-center gap-2 rounded-full font-medium transition-[background-color,box-shadow,border-color,color] duration-250 ease-out',
-        'cursor-pointer disabled:cursor-not-allowed disabled:opacity-40 select-none outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2',
+        'cursor-pointer disabled:cursor-not-allowed disabled:shadow-none select-none outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2',
         size === 'sm' && 'h-8 px-3 text-[13px]',
         size === 'md' && 'h-10 px-4.5 text-[14px]',
         size === 'lg' && 'h-12 px-6 text-[15px]',
         variant === 'accent' &&
           'bg-accent text-accent-ink hover:bg-accent-hover active:bg-accent-active shadow-[var(--accent-glow)] hover:shadow-[0_10px_40px_-2px_var(--accent-glow)] font-semibold',
+        // Not ready yet: an unlit sky outline with solid, readable text instead of a faded fill.
+        variant === 'accent' &&
+          'disabled:bg-accent-muted disabled:text-accent-hover disabled:ring-1 disabled:ring-inset disabled:ring-accent/45',
         variant === 'neon-glow' &&
-          'border border-accent/40 bg-accent-subtle text-accent hover:bg-accent-muted hover:border-accent hover:shadow-[var(--accent-glow)]',
+          'border border-accent/40 bg-accent-subtle text-accent hover:bg-accent-muted hover:border-accent hover:shadow-[var(--accent-glow)] disabled:border-line-strong disabled:bg-transparent disabled:text-ink-3',
         variant === 'ghost' &&
-          'text-ink-2 hover:text-ink hover:bg-accent-subtle',
+          'text-ink-2 hover:text-ink hover:bg-accent-subtle disabled:bg-transparent disabled:text-ink-3',
         variant === 'outline' &&
-          'hairline-strong text-ink hover:text-accent hover:border-accent/40 hover:bg-accent-subtle',
+          'hairline-strong text-ink hover:text-accent hover:border-accent/40 hover:bg-accent-subtle disabled:bg-transparent disabled:text-ink-3',
         sweep && 'sweep',
         className
       )}
       {...(rest as any)}
     >
       {/* Subtle glowing reflection layer */}
-      <span className="pointer-events-none absolute inset-0 rounded-full opacity-0 transition-opacity duration-300 group-hover:opacity-100 bg-gradient-to-t from-white/0 via-white/10 to-white/20" />
+      <span className="pointer-events-none absolute inset-0 rounded-full opacity-0 transition-opacity duration-300 group-enabled:group-hover:opacity-100 bg-gradient-to-t from-white/0 via-white/10 to-white/20" />
       <span className="relative z-10 flex items-center gap-2">{children}</span>
     </motion.button>
   )

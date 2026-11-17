@@ -2,7 +2,8 @@
 
 ## Automated (run before every push)
 ```bash
-cd backend && uv run pytest -q          # 12 tests: pricing + API flows
+cd backend && uv run pytest -q          # 21 tests: pricing, SSRF guard, API flows, production gating
+TEST_DATABASE_URL=postgresql://… uv run pytest -q   # same suite on Postgres
 cd frontend && npx tsc -b && pnpm build  # type-check + production bundle
 ```
 
@@ -20,14 +21,17 @@ cd frontend && npx tsc -b && pnpm build  # type-check + production bundle
 | 5 | Submit (Razorpay test keys) | Razorpay modal opens with the amount; test UPI success → verifying → done; row appears |
 | 6 | Row "claim this rank for ₹X" | Scrolls to hero, amount prefilled to X, URL input focused |
 | 7 | Product page "Outrank for ₹X" | Navigates home with the amount prefilled |
-| 8 | Palette picker | Each swatch recolours buttons, tabs, row tints, glow and background instantly; choice survives reload |
+| 8 | Claim form | `*` on URL, category and Terms (and discount on Deals); entering a URL and choosing a category reveals the optional startup details |
 | 9 | Deals tab | Extra discount + coupon fields; discount counter 0/100; Claim disabled until described |
 | 10 | Today tab | Countdown to midnight IST; empty state copy when no payments today |
 | 11 | Categories page | Hottest 3 cards; every category with top 3 or "Take #1 for ₹X" |
 | 12 | Daily page | Today marked live with countdown; past days frozen; "Show all N ranks" opens the day board |
 | 13 | Search (⌘/Ctrl K or icon) | Filters by title, domain, category; Esc closes |
 | 14 | 390 px wide | No horizontal scroll; chip rail scrolls; form stacks; sidebars move below the list |
-| 15 | OS reduced-motion on | Background static, no entrance animations, spotlight static |
+| 15 | OS reduced-motion on | No tubes (static glow only), no entrance animations |
+| 18 | Hero tubes | Tubes follow the cursor in the first viewport; clicking empty space cycles palettes; links and buttons are unaffected |
+| 19 | Production, no Razorpay keys | Claim shows "Payments are temporarily unavailable"; `/api/payments/mock/*` is 404 |
+| 20 | Empty database | Home shows "Nothing listed yet"; Daily shows "Today's board is open"; no stats strip until DataFast has data |
 | 16 | Keyboard only | Every control reachable; visible accent focus ring |
 | 17 | Webhook replay (`curl` same body twice) | Second response `duplicate: true`, total unchanged |
 

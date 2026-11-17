@@ -16,7 +16,7 @@ function Mini({
   empty: string
 }) {
   return (
-    <section className="rounded-3xl bg-surface/70 backdrop-blur-xl p-4 hairline shadow-sm">
+    <section className="rounded-3xl bg-surface/95 backdrop-blur-xl p-4 hairline shadow-sm">
       <div className="mb-3 flex items-center justify-between">
         <h2 className="flex items-center gap-2 text-[13px] font-bold tracking-tight text-ink">
           <span className="size-2 rounded-full bg-accent shadow-[0_0_10px_var(--accent)]" />
@@ -24,7 +24,7 @@ function Mini({
         </h2>
         <Link
           to={to}
-          className="group inline-flex items-center text-[12px] font-medium text-ink-3 hover:text-accent transition-colors"
+          className="group inline-flex items-center text-[12px] font-medium text-ink-2 hover:text-accent transition-colors"
         >
           See all
           <ChevronRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
@@ -32,7 +32,7 @@ function Mini({
       </div>
 
       {items.length === 0 ? (
-        <p className="text-[12.5px] text-ink-3 py-3 text-center">{empty}</p>
+        <p className="text-[12.5px] font-medium text-ink-3 py-3 text-center">{empty}</p>
       ) : (
         <ol className="space-y-1.5">
           {items.slice(0, 5).map((l) => (
@@ -42,7 +42,7 @@ function Mini({
                   to={`/product/${l.slug}`}
                   className="flex items-center gap-2 rounded-xl px-2 py-1.5 transition-colors hover:bg-accent-subtle"
                 >
-                  <span className="tnum w-5 font-mono text-[11px] font-semibold text-accent">
+                  <span className="tnum w-5 font-mono text-[11.5px] font-semibold text-accent">
                     #{l.rank}
                   </span>
                   <img

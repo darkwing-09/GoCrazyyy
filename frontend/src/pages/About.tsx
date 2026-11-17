@@ -10,8 +10,8 @@ export function About() {
         <h1 className="display balance text-[2.25rem] leading-tight font-bold sm:text-[2.75rem]">Ads are expensive. A rank is ₹99.</h1>
         <div className="mt-6 space-y-4 text-[15.5px] leading-relaxed text-ink-2">
           <p>GoCrazy is a public leaderboard where Indian startups buy their place. There is no jury, no upvotes and no algorithm. Whoever has paid the most sits at the top, and every rupee you ever paid keeps counting.</p>
-          <p>It exists because early founders get the worst deal in advertising: tiny budgets, auction prices set by big brands, and zero proof that anyone saw the ad. Here the proof is the board itself. Buyers can see the traffic numbers below, the clicks on every row, and exactly what it costs to outrank anyone.</p>
-          <p>The idea is borrowed openly from pay-to-rank boards abroad. The India-first parts are ours: rupee pricing, UPI through Razorpay, a board that resets at midnight IST so a student project can own a day, and categories for campus builders and fintech.</p>
+          <p>Early-stage founders get the worst deal in advertising: small budgets, auction prices set by large brands, and no proof that anyone saw the ad. On GoCrazy the proof is the board itself. Every row shows its clicks, every rank shows its price, and anyone can see exactly what it costs to outrank anyone else.</p>
+          <p>It is built for India: prices in rupees, UPI, cards and netbanking through Razorpay, and a Today board that resets at midnight IST so a small budget can own a day even when the All-time board is held by larger spenders.</p>
         </div>
         <Reveal className="mt-10">
           <h2 className="display text-xl font-semibold">How the money works</h2>
@@ -22,8 +22,8 @@ export function About() {
           </ul>
         </Reveal>
         <Reveal className="mt-10">
-          <h2 className="display text-xl font-semibold">Honest numbers</h2>
-          <p className="mt-3 text-[15px] text-ink-2">The visitor and revenue figures on this site come straight from our DataFast analytics, refreshed every minute. Early on they will look small. We show them anyway, because you are paying for eyeballs and should know how many there are.</p>
+          <h2 className="display text-xl font-semibold">Transparent numbers</h2>
+          <p className="mt-3 text-[15px] text-ink-2">Site traffic is measured by independent analytics and published openly. Clicks on every listing are counted by our own redirect and tagged with <code className="font-mono text-[13px]">utm_source=gocrazy</code>, so you can verify the traffic in your own analytics too.</p>
         </Reveal>
         <div className="mt-10"><Link to="/"><Button size="lg">Claim your rank</Button></Link></div>
       </article>

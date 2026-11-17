@@ -1,12 +1,7 @@
+"""Vercel Python entrypoint. Vercel serves the ASGI `app` for every route rewritten to /api/index."""
 import sys
 from pathlib import Path
 
-# Add backend directory to sys.path so 'app' packages can be imported
-ROOT_DIR = Path(__file__).resolve().parent.parent
-BACKEND_DIR = ROOT_DIR / "backend"
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "backend"))
 
-if str(BACKEND_DIR) not in sys.path:
-    sys.path.insert(0, str(BACKEND_DIR))
-
-# Export the FastAPI app for Vercel's Python Serverless Runtime
-from app.main import app  # noqa: E402
+from app.main import app  # noqa: E402,F401

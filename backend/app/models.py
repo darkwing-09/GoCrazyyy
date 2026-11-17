@@ -38,7 +38,6 @@ class Listing(Base):
     deal_text: Mapped[str | None] = mapped_column(String(100), nullable=True)
     coupon: Mapped[str | None] = mapped_column(String(60), nullable=True)
     published: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
-    is_demo: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     published_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 

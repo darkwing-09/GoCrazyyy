@@ -13,9 +13,10 @@ Indian early-stage founders and indie makers buying distribution for ₹99 to a 
 - Placements are paid advertisements and are labelled as such. No refunds.
 
 ## Brand commitments (pinned by the user)
-- Near-black ground, one restrained neon accent that the visitor can switch (palette picker), light-based motion (glow, blur, beams) rather than bouncy transforms. No navy, no amber, no gradient text, no glass-as-decoration.
+- Near-black ground (dark theme only), one sky-blue accent #38bdf8, light-based motion (glow, blur, beams, the hero's neon tubes) rather than bouncy transforms. No navy, no amber, no gradient text.
 - Reference craft bar: Aceternity UI, Skiper UI, animmasterlib. outbid.lol is the functional reference, not the visual one.
 
-## Assumptions (no interview was possible in this session)
+## Launch state
+- Production starts with an empty board; no sample listings.
 - Niche left open; copy addresses "Indian startups" broadly.
 - GST is treated as inclusive in the displayed price; confirm with a CA.

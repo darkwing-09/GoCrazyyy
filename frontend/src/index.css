@@ -21,56 +21,32 @@
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* ─── DARK CYBER MODE (Futuristic Neon Void) ─── */
-:root, :root.dark {
+/* ─── THEME: dark only ─── */
+:root {
   --bg: #07070a;
-  --surface: #0e0e13;
-  --raised: #14141c;
-  --line: rgb(255 255 255 / 0.07);
-  --line-strong: rgb(255 255 255 / 0.14);
+  --surface: #101016;
+  --raised: #17171f;
+  --line: rgb(255 255 255 / 0.11);
+  --line-strong: rgb(255 255 255 / 0.2);
 
-  --ink: #f4f4f7;
-  --ink-2: #a1a1aa;
-  --ink-3: #71717a;
+  /* Text. Three solid steps, no alpha. On the lightest surface (#17171f):
+     ink 17.1:1, ink-2 13.8:1, ink-3 9.1:1. ink-3 doubles as the placeholder colour. */
+  --ink: #fafafc;
+  --ink-2: #e2e2e9;
+  --ink-3: #b8b8c4;
 
-  /* Dedicated Theme: #38bdf8 (Cyber Sky Blue) */
   --accent: #38bdf8;
   --accent-hover: #7dd3fc;
   --accent-active: #0284c7;
   --accent-ink: #041419;
-  --accent-subtle: rgba(56, 189, 248, 0.08);
-  --accent-muted: rgba(56, 189, 248, 0.18);
+  --accent-subtle: rgba(56, 189, 248, 0.1);
+  --accent-muted: rgba(56, 189, 248, 0.2);
   --accent-12: var(--accent-subtle);
   --accent-20: var(--accent-muted);
   --accent-40: rgba(56, 189, 248, 0.35);
   --accent-glow: 0 8px 36px -4px rgba(56, 189, 248, 0.55);
 
   color-scheme: dark;
-}
-
-/* ─── LIGHT MODE (High-Contrast Sky & Slate) ─── */
-:root.light {
-  --bg: #f8fafc;
-  --surface: #f1f5f9;
-  --raised: #e2e8f0;
-  --line: rgb(15 23 42 / 0.08);
-  --line-strong: rgb(15 23 42 / 0.16);
-
-  --ink: #0f172a;
-  --ink-2: #475569;
-  --ink-3: #64748b;
-
-  --accent: #38bdf8;
-  --accent-hover: #7dd3fc;
-  --accent-active: #0284c7;
-  --accent-ink: #041419;
-  --accent-subtle: rgba(56, 189, 248, 0.08);
-  --accent-muted: rgba(56, 189, 248, 0.18);
-  --accent-12: var(--accent-subtle);
-  --accent-20: var(--accent-muted);
-  --accent-40: rgba(56, 189, 248, 0.35);
-  --accent-glow: 0 8px 36px -4px rgba(56, 189, 248, 0.45);
-  color-scheme: light;
 }
 
 html {
@@ -87,10 +63,25 @@ body {
   background: transparent;
   color: var(--ink);
   font-family: var(--font-sans);
+  /* Schibsted Grotesk is variable (400–700): 450 gives light-on-dark body copy a solid stem
+     without reading as bold; font-medium (500) and up still step clearly above it. */
+  font-weight: 450;
   font-feature-settings: "ss01", "cv11";
-  -webkit-font-smoothing: antialiased;
+  /* Default (subpixel-style) smoothing keeps macOS's stem darkening, so light text on the
+     near-black ground renders full-weight instead of thinned. Display type opts back in to
+     grayscale smoothing below, where heavy weights and tight tracking would otherwise clot. */
+  -webkit-font-smoothing: auto;
+  -moz-osx-font-smoothing: auto;
   text-rendering: optimizeLegibility;
   overflow-x: hidden;
+}
+
+/* Placeholders: solid ink-3 (no browser alpha), medium weight so they read at 12–14px,
+   still a clear step below typed ink. */
+::placeholder {
+  color: var(--ink-3);
+  opacity: 1;
+  font-weight: 500;
 }
 
 /* Browser selections & inputs */
@@ -141,6 +132,14 @@ a {
   font-family: var(--font-display);
   letter-spacing: -0.035em;
   font-variation-settings: "opsz" 96;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Separation for text that sits directly over the neon-tube hero: a tight, near-black
+   shadow that keeps glyph edges crisp. Never coloured, never a glow. */
+.text-lift {
+  text-shadow: 0 1px 2px rgb(0 0 0 / 0.7), 0 0 12px rgb(7 7 10 / 0.65);
 }
 
 .balance {
@@ -149,14 +148,14 @@ a {
 
 /* Glassmorphism surfaces */
 .glass-panel {
-  background: color-mix(in srgb, var(--surface) 80%, transparent);
+  background: color-mix(in srgb, var(--surface) 95%, transparent);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid var(--line);
 }
 
 .glass-panel-raised {
-  background: color-mix(in srgb, var(--raised) 85%, transparent);
+  background: color-mix(in srgb, var(--raised) 96%, transparent);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--line-strong);

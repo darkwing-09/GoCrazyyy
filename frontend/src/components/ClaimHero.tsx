@@ -6,7 +6,6 @@ import {
   Plus,
   Globe,
   ChevronDown,
-  ChevronUp,
   Percent,
   Ticket,
   Loader2,
@@ -58,7 +57,6 @@ export const ClaimHero = forwardRef<ClaimHeroHandle, Props>(function ClaimHero(
   const [sweep, setSweep] = useState(0)
 
   // Optional startup details & contacts
-  const [showDetails, setShowDetails] = useState(false)
   const [location, setLocation] = useState('')
   const [stage, setStage] = useState('')
   const [twitter, setTwitter] = useState('')
@@ -109,6 +107,9 @@ export const ClaimHero = forwardRef<ClaimHeroHandle, Props>(function ClaimHero(
     setAmount((a) => Math.max(0, Math.min(meta?.pricing.max ?? 50_000_000, (a ?? 0) + dir * step)))
     setSweep((s) => s + 1)
   }
+
+  // The optional details appear once the two required listing fields are in.
+  const detailsOpen = !!url.trim() && !!cat
 
   const min =
     quote?.min_paise ??
@@ -192,7 +193,7 @@ export const ClaimHero = forwardRef<ClaimHeroHandle, Props>(function ClaimHero(
   return (
     <section id="claim" className="scroll-mt-24 pt-10 pb-4">
       {/* Hero Stepper Headline */}
-      <h1 className="display balance text-center text-[2.2rem] leading-[1.08] font-bold tracking-tight sm:text-[2.9rem] md:text-[3.5rem]">
+      <h1 className="display text-lift balance text-center text-[2.2rem] leading-[1.08] font-bold tracking-tight text-ink sm:text-[2.9rem] md:text-[3.5rem]">
         Claim{' '}
         <AnimatePresence mode="popLayout" initial={false}>
           <motion.span
@@ -201,7 +202,7 @@ export const ClaimHero = forwardRef<ClaimHeroHandle, Props>(function ClaimHero(
             animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
             exit={reducedMotion ? undefined : { opacity: 0, y: -12, filter: 'blur(6px)' }}
             transition={{ duration: 0.3 }}
-            className="tnum inline-block text-accent drop-shadow-[0_0_20px_var(--accent)]"
+            className="tnum inline-block text-accent"
           >
             #{rank}
           </motion.span>
@@ -245,34 +246,36 @@ export const ClaimHero = forwardRef<ClaimHeroHandle, Props>(function ClaimHero(
       <form onSubmit={(e) => { e.preventDefault(); submit() }} className="mx-auto mt-7 max-w-2xl">
         <div className="flex flex-col gap-2.5 sm:flex-row">
           <label className="relative flex-1">
-            <Globe className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-ink-3" />
+            <Globe className="pointer-events-none absolute top-1/2 left-3.5 z-10 size-4 -translate-y-1/2 text-ink-2" />
             <input
               ref={urlRef}
               value={url}
               onChange={(e) => setUrl(e.target.value)}
-              placeholder="Your startup URL or @handle"
-              aria-label="Startup URL or handle"
+              placeholder="Your startup URL or @handle *"
+              aria-label="Startup URL or handle (required)"
+              aria-required="true"
               inputMode="url"
               autoComplete="url"
-              className="h-12 w-full rounded-full bg-surface/80 backdrop-blur-md pr-4 pl-10 text-[14.5px] hairline placeholder:text-ink-3 transition duration-200 outline-none focus:border-accent/40 focus:ring-1 focus:ring-accent"
+              className="h-12 w-full rounded-full bg-surface/95 backdrop-blur-md pr-4 pl-10 text-[14.5px] font-medium text-ink hairline placeholder:text-ink-3 transition duration-200 outline-none focus:border-accent/40 focus:ring-1 focus:ring-accent"
             />
           </label>
           <label className="relative sm:w-56">
             <select
               value={cat}
               onChange={(e) => setCat(e.target.value)}
-              aria-label="Category"
+              aria-label="Category (required)"
+              aria-required="true"
               className={clsx(
-                'h-12 w-full appearance-none rounded-full bg-surface/80 backdrop-blur-md pr-9 pl-4 text-[14px] hairline outline-none transition duration-200 focus:border-accent/40 focus:ring-1 focus:ring-accent cursor-pointer',
-                !cat && 'text-ink-3'
+                'h-12 w-full appearance-none rounded-full bg-surface/95 backdrop-blur-md pr-9 pl-4 text-[14px] font-medium hairline outline-none [&_option]:bg-raised [&_option]:text-ink transition duration-200 focus:border-accent/40 focus:ring-1 focus:ring-accent cursor-pointer',
+                cat ? 'text-ink' : 'text-ink-3'
               )}
             >
-              <option value="" disabled>Choose a category</option>
+              <option value="" disabled>Choose a category *</option>
               {categories.map((c) => (
                 <option key={c.slug} value={c.slug}>{c.name}</option>
               ))}
             </select>
-            <ChevronDown className="pointer-events-none absolute top-1/2 right-3.5 size-4 -translate-y-1/2 text-ink-3" />
+            <ChevronDown className="pointer-events-none absolute top-1/2 right-3.5 z-10 size-4 -translate-y-1/2 text-ink-2" />
           </label>
           <Button
             type="submit"
@@ -289,57 +292,56 @@ export const ClaimHero = forwardRef<ClaimHeroHandle, Props>(function ClaimHero(
         {board === 'deals' && (
           <div className="mt-2.5 flex flex-col gap-2 sm:flex-row">
             <label className="relative flex-1">
-              <Percent className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-ink-3" />
+              <Percent className="pointer-events-none absolute top-1/2 left-3.5 z-10 size-4 -translate-y-1/2 text-ink-2" />
               <input
                 value={deal}
                 maxLength={100}
                 onChange={(e) => setDeal(e.target.value)}
-                placeholder="Describe your discount, e.g. 50% off for 6 months"
-                aria-label="Discount"
-                className="h-12 w-full rounded-full bg-surface/80 backdrop-blur-md pr-14 pl-10 text-[14.5px] hairline placeholder:text-ink-3 outline-none focus:border-accent/40 focus:ring-1 focus:ring-accent"
+                placeholder="Describe your discount, e.g. 50% off for 6 months *"
+                aria-label="Discount (required)"
+                aria-required="true"
+                className="h-12 w-full rounded-full bg-surface/95 backdrop-blur-md pr-14 pl-10 text-[14.5px] font-medium text-ink hairline placeholder:text-ink-3 outline-none focus:border-accent/40 focus:ring-1 focus:ring-accent"
               />
-              <span className="tnum absolute top-1/2 right-4 -translate-y-1/2 font-mono text-[11px] text-ink-3">
+              <span className="tnum absolute top-1/2 right-4 -translate-y-1/2 font-mono text-[11px] font-medium text-ink-3">
                 {deal.length}/100
               </span>
             </label>
             <label className="relative sm:w-56">
-              <Ticket className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-ink-3" />
+              <Ticket className="pointer-events-none absolute top-1/2 left-3.5 z-10 size-4 -translate-y-1/2 text-ink-2" />
               <input
                 value={coupon}
                 maxLength={60}
                 onChange={(e) => setCoupon(e.target.value)}
                 placeholder="Coupon code"
                 aria-label="Coupon code"
-                className="h-12 w-full rounded-full bg-surface/80 backdrop-blur-md pr-4 pl-10 text-[14.5px] hairline placeholder:text-ink-3 outline-none focus:border-accent/40 focus:ring-1 focus:ring-accent"
+                className="h-12 w-full rounded-full bg-surface/95 backdrop-blur-md pr-4 pl-10 text-[14.5px] font-medium text-ink hairline placeholder:text-ink-3 outline-none focus:border-accent/40 focus:ring-1 focus:ring-accent"
               />
             </label>
           </div>
         )}
 
-        {/* Expandable Startup Details & Contacts Section */}
-        <div className="mt-3 text-center sm:text-left">
-          <button
-            type="button"
-            onClick={() => setShowDetails((s) => !s)}
-            className="inline-flex items-center gap-1.5 text-[12.5px] font-medium text-ink-3 transition-colors hover:text-accent cursor-pointer"
-          >
-            <Sparkles className="size-3.5 text-accent" />
-            <span>{showDetails ? 'Hide startup details & contacts' : '+ Add startup details & contacts (optional)'}</span>
-            {showDetails ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
-          </button>
-
-          <AnimatePresence>
-            {showDetails && (
+        {/* Startup details & contacts: revealed once the required URL and category are filled */}
+        <div className="text-left">
+          <AnimatePresence initial={false}>
+            {detailsOpen && (
               <motion.div
-                initial={{ opacity: 0, height: 0 }}
+                initial={reducedMotion ? false : { opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                exit={reducedMotion ? undefined : { opacity: 0, height: 0 }}
+                transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
                 className="overflow-hidden pt-3"
               >
-                <div className="rounded-3xl bg-surface/80 p-4 border border-line backdrop-blur-md space-y-2.5">
-                  <p className="text-[12px] text-ink-3 mb-1">
-                    Help prospective customers and investors reach you directly through your GoCrazy listing:
+                <fieldset className="space-y-2.5 rounded-3xl border border-line-strong bg-surface p-4">
+                  <legend className="sr-only">Startup details and contacts</legend>
+                  <div className="mb-1 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
+                    <p className="flex items-center gap-1.5 text-[13.5px] font-semibold text-ink">
+                      <Sparkles className="size-3.5 text-accent" />
+                      Startup details & contacts
+                    </p>
+                    <span className="text-[12px] font-medium text-ink-3">Optional · shown on your listing page</span>
+                  </div>
+                  <p className="text-[13px] text-ink-2">
+                    Help customers and investors reach you directly through your GoCrazy listing.
                   </p>
 
                   <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
@@ -350,7 +352,7 @@ export const ClaimHero = forwardRef<ClaimHeroHandle, Props>(function ClaimHero(
                         onChange={(e) => setLocation(e.target.value)}
                         placeholder="HQ / City (e.g. Bengaluru, Remote)"
                         aria-label="Location"
-                        className="h-10 w-full rounded-full bg-raised/80 pr-3 pl-9 text-[13px] hairline placeholder:text-ink-3 outline-none focus:border-accent/40"
+                        className="h-10 w-full rounded-full bg-raised pr-3 pl-9 text-[13.5px] font-medium text-ink hairline placeholder:text-ink-3 outline-none transition focus:ring-1 focus:ring-accent"
                       />
                     </label>
 
@@ -361,7 +363,7 @@ export const ClaimHero = forwardRef<ClaimHeroHandle, Props>(function ClaimHero(
                         onChange={(e) => setStage(e.target.value)}
                         placeholder="Stage (e.g. Bootstrapped, Seed, Series A)"
                         aria-label="Startup Stage"
-                        className="h-10 w-full rounded-full bg-raised/80 pr-3 pl-9 text-[13px] hairline placeholder:text-ink-3 outline-none focus:border-accent/40"
+                        className="h-10 w-full rounded-full bg-raised pr-3 pl-9 text-[13.5px] font-medium text-ink hairline placeholder:text-ink-3 outline-none transition focus:ring-1 focus:ring-accent"
                       />
                     </label>
                   </div>
@@ -374,7 +376,7 @@ export const ClaimHero = forwardRef<ClaimHeroHandle, Props>(function ClaimHero(
                         onChange={(e) => setTwitter(e.target.value)}
                         placeholder="Twitter / X (@handle)"
                         aria-label="Twitter handle"
-                        className="h-10 w-full rounded-full bg-raised/80 pr-3 pl-9 text-[13px] hairline placeholder:text-ink-3 outline-none focus:border-accent/40"
+                        className="h-10 w-full rounded-full bg-raised pr-3 pl-9 text-[13.5px] font-medium text-ink hairline placeholder:text-ink-3 outline-none transition focus:ring-1 focus:ring-accent"
                       />
                     </label>
 
@@ -385,7 +387,7 @@ export const ClaimHero = forwardRef<ClaimHeroHandle, Props>(function ClaimHero(
                         onChange={(e) => setLinkedin(e.target.value)}
                         placeholder="LinkedIn (profile / page)"
                         aria-label="LinkedIn profile"
-                        className="h-10 w-full rounded-full bg-raised/80 pr-3 pl-9 text-[13px] hairline placeholder:text-ink-3 outline-none focus:border-accent/40"
+                        className="h-10 w-full rounded-full bg-raised pr-3 pl-9 text-[13.5px] font-medium text-ink hairline placeholder:text-ink-3 outline-none transition focus:ring-1 focus:ring-accent"
                       />
                     </label>
 
@@ -394,32 +396,33 @@ export const ClaimHero = forwardRef<ClaimHeroHandle, Props>(function ClaimHero(
                       <input
                         value={contactPhone}
                         onChange={(e) => setContactPhone(e.target.value)}
-                        placeholder="WhatsApp / Inquiries phone"
+                        placeholder="WhatsApp number"
                         aria-label="Phone or WhatsApp"
-                        className="h-10 w-full rounded-full bg-raised/80 pr-3 pl-9 text-[13px] hairline placeholder:text-ink-3 outline-none focus:border-accent/40"
+                        className="h-10 w-full rounded-full bg-raised pr-3 pl-9 text-[13.5px] font-medium text-ink hairline placeholder:text-ink-3 outline-none transition focus:ring-1 focus:ring-accent"
                       />
                     </label>
                   </div>
-                </div>
+                </fieldset>
               </motion.div>
             )}
           </AnimatePresence>
         </div>
 
-        <div className="mt-3.5 flex flex-col items-center justify-between gap-2.5 text-[12.5px] text-ink-3 sm:flex-row">
-          <label className="flex items-center gap-2 cursor-pointer">
+        <div className="mt-3.5 flex flex-col items-center justify-between gap-2.5 text-[12.5px] font-medium text-ink-2 sm:flex-row">
+          <label className="text-lift flex items-center gap-2 cursor-pointer text-ink-2">
             <input
               type="checkbox"
+              aria-required="true"
               checked={terms}
               onChange={(e) => setTerms(e.target.checked)}
               className="size-4 accent-accent cursor-pointer rounded"
             />
             <span>
               I accept the{' '}
-              <Link to="/terms" className="text-ink-2 underline underline-offset-4 hover:text-accent">
+              <Link to="/terms" className="text-ink underline underline-offset-4 hover:text-accent">
                 Terms
               </Link>
-              . Paid placement, rank is bought.
+              <span className="text-accent" aria-hidden> *</span>. Paid placement, rank is bought.
             </span>
           </label>
           <input
@@ -428,19 +431,21 @@ export const ClaimHero = forwardRef<ClaimHeroHandle, Props>(function ClaimHero(
             type="email"
             placeholder="Receipt & lead inquiries email"
             aria-label="Email"
-            className="h-8.5 w-full rounded-full bg-surface/80 backdrop-blur-md px-3 text-[12.5px] hairline placeholder:text-ink-3 outline-none focus:border-accent/40 sm:w-64"
+            className="h-8.5 w-full rounded-full bg-surface/95 backdrop-blur-md px-3 text-[12.5px] font-medium text-ink hairline placeholder:text-ink-3 outline-none focus:border-accent/40 sm:w-64"
           />
         </div>
 
+        <p className="text-lift mt-2 text-center text-[12px] font-medium text-ink-2 sm:text-left"><span className="text-accent">*</span> Required</p>
+
         {/* Dynamic quote status */}
-        <div className="mt-3 min-h-5 text-center text-[13px]" aria-live="polite">
+        <div className="text-lift mt-3 min-h-5 text-center text-[13px] font-medium" aria-live="polite">
           {error ? (
-            <span className="text-[#ff5c5c] font-medium">{error}</span>
+            <span className="text-[#ff6b6b] font-semibold">{error}</span>
           ) : (
             quote &&
             amount !== null && (
               amount < quote.min_paise ? (
-                <span className="text-ink-3">
+                <span className="text-ink-2">
                   Minimum is ₹{rupeesPlain(quote.min_paise)}
                   {quote.existing ? ` to raise ${quote.existing.title}` : ' for a new listing'}.
                 </span>

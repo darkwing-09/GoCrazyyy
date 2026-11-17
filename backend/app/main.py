@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 from pydantic import BaseModel, Field
 from sqlalchemy import select, func, text
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session, selectinload
 
 from .config import get_settings
@@ -14,36 +15,25 @@ from .db import Base, engine, get_db, SessionLocal
 from .models import Category, Listing, Order, Payment, Click, WebhookEvent
 from . import boards, pricing, metadata, razorpay_client as rzp, datafast
 from .ledger import record_capture
-from .seed import seed
+from .seed import seed_categories
 
 log = logging.getLogger("gocrazy")
 settings = get_settings()
-app = FastAPI(title="GoCrazy API", version="0.1.0")
+app = FastAPI(title="GoCrazy API", version="1.0.0",
+              docs_url=None if settings.is_production else "/api/docs", redoc_url=None, openapi_url=None if settings.is_production else "/api/openapi.json")
 app.add_middleware(CORSMiddleware, allow_origins=settings.origins, allow_methods=["*"], allow_headers=["*"])
 
 PAGE_SIZE = 50
 
 
-@app.on_event("startup")
-def _startup():
+def init_db() -> None:
+    """Runs once per cold start. Vercel's Python runtime does not reliably fire ASGI startup events."""
     Base.metadata.create_all(engine)
-    # Ensure optional startup & contact detail columns exist on SQLite
-    with engine.connect() as conn:
-        for col, typ in [
-            ("twitter", "VARCHAR(80)"),
-            ("linkedin", "VARCHAR(250)"),
-            ("location", "VARCHAR(120)"),
-            ("stage", "VARCHAR(60)"),
-            ("contact_phone", "VARCHAR(50)"),
-        ]:
-            try:
-                conn.execute(text(f"ALTER TABLE listings ADD COLUMN {col} {typ}"))
-                conn.commit()
-            except Exception:
-                pass
-    if settings.seed_demo:
-        with SessionLocal() as db:
-            seed(db)
+    with SessionLocal() as db:
+        seed_categories(db)
+
+
+init_db()
 
 
 # ---------- serialisers ----------
@@ -52,22 +42,20 @@ def cat_out(c: Category) -> dict:
     return {"slug": c.slug, "name": c.name, "icon": c.icon}
 
 
-def listing_out(r: boards.Row, board: str = "alltime", take_price: int | None = None) -> dict:
+def listing_out(r: boards.Row, board: str = "alltime", take_price: int | None = None, contacts: bool = False) -> dict:
     l = r.listing
     return {
         "rank": r.rank, "slug": l.slug, "title": l.title, "description": l.description, "url": l.url,
         "domain": l.domain, "favicon": l.favicon, "category": cat_out(l.category),
-        "total_paise": r.total_paise, "clicks": r.clicks, "is_demo": l.is_demo,
+        "total_paise": r.total_paise, "clicks": r.clicks,
         "published_at": boards.as_utc(l.published_at or l.created_at).isoformat(),
         "last_paid_at": r.last_paid_at.isoformat() if r.last_paid_at else None,
         "deal_text": l.deal_text, "coupon": l.coupon if board == "deals" else None,
         "take_price_paise": take_price,
-        "contact_email": l.contact_email,
-        "twitter": getattr(l, "twitter", None),
-        "linkedin": getattr(l, "linkedin", None),
-        "location": getattr(l, "location", None),
-        "stage": getattr(l, "stage", None),
-        "contact_phone": getattr(l, "contact_phone", None),
+        "twitter": l.twitter, "linkedin": l.linkedin, "location": l.location, "stage": l.stage,
+        # Direct contacts only on the listing's own page, never in bulk board responses.
+        "contact_email": l.contact_email if contacts else None,
+        "contact_phone": l.contact_phone if contacts else None,
     }
 
 
@@ -87,7 +75,8 @@ def activity_out(p: Payment) -> dict:
 
 @app.get("/api/meta")
 def meta():
-    return {"payments_mode": settings.payments_mode, "razorpay_key_id": settings.razorpay_key_id or None,
+    return {"payments_mode": settings.payments_mode, "payments_available": settings.payments_mode == "razorpay" or settings.mock_payments_allowed,
+            "razorpay_key_id": settings.razorpay_key_id or None,
             "datafast_website_id": settings.datafast_website_id or None,
             "datafast_domain": settings.datafast_domain or None,
             "public_stats_url": settings.datafast_public_stats_url or None,
@@ -95,7 +84,9 @@ def meta():
                         "rank_bump": pricing.RANK_BUMP, "min_raise": pricing.MIN_RAISE, "step": pricing.STEP,
                         "max": pricing.MAX_AMOUNT, "min_new_deal": pricing.MIN_NEW_DEAL,
                         "take_top_bump_deal": pricing.TAKE_TOP_BUMP_DEAL},
-            "launched_at": "2026-11-17"}
+            "business": {"name": settings.business_name, "email": settings.contact_email or None,
+                         "address": settings.business_address or None, "jurisdiction": settings.jurisdiction or None},
+            "launched_at": settings.launched_at or None, "deals_closes_at": settings.deals_closes_at or None}
 
 
 @app.get("/api/categories")
@@ -187,7 +178,7 @@ def listing(slug: str, db: Session = Depends(get_db)):
     ledger = db.execute(select(Payment).where(Payment.listing_id == l.id).order_by(Payment.captured_at.desc())).scalars().all()
     also = [r for r in incat if r.listing.id != l.id][:5]
     return {
-        **listing_out(row, "alltime"),
+        **listing_out(row, "alltime", contacts=True),
         "overall": {"rank": o.rank if o else None, "of": len(overall),
                     "outrank_paise": (pricing.price_for_rank(totals, o.rank) if o else None)},
         "category_rank": {"rank": c.rank if c else None, "of": len(incat)},
@@ -225,9 +216,7 @@ async def stats(db: Session = Depends(get_db)):
     all_ov = await datafast.overview()
     products = db.execute(select(func.count(Listing.id)).where(Listing.published.is_(True))).scalar()
     ledger = db.execute(select(func.coalesce(func.sum(Payment.amount_paise), 0))).scalar()
-    demo = bool(db.execute(select(func.count(Listing.id)).where(Listing.is_demo.is_(True), Listing.published.is_(True))).scalar())
     return {
-        "demo": demo,
         "source": "datafast" if all_ov is not None else "unconfigured",
         "online": online, "visitors_today": (today_ov or {}).get("visitors"),
         "visitors_total": (all_ov or {}).get("visitors"),
@@ -241,8 +230,10 @@ async def stats(db: Session = Depends(get_db)):
 async def resolve(url: str):
     try:
         return await metadata.resolve(url)
-    except Exception as e:
-        raise HTTPException(400, f"could not read that URL: {e}")
+    except metadata.BlockedURL as e:
+        raise HTTPException(400, str(e))
+    except Exception:
+        raise HTTPException(400, "Could not read that URL.")
 
 
 @app.get("/out/{slug}")
@@ -278,6 +269,9 @@ class ClaimIn(BaseModel):
 
 @app.post("/api/claims")
 async def create_claim(body: ClaimIn, db: Session = Depends(get_db)):
+    if settings.payments_mode != "razorpay" and not settings.mock_payments_allowed:
+        log.error("claim refused: Razorpay keys are not configured in production")
+        raise HTTPException(503, "Payments are temporarily unavailable. Please try again shortly.")
     if not body.accept_terms:
         raise HTTPException(400, "You must accept the Terms to claim a rank.")
     if body.amount_paise % 100:
@@ -289,7 +283,10 @@ async def create_claim(body: ClaimIn, db: Session = Depends(get_db)):
     cat = db.execute(select(Category).where(Category.slug == body.category)).scalar_one_or_none()
     if not cat:
         raise HTTPException(400, "Pick a category.")
-    meta_ = await metadata.resolve(body.url)
+    try:
+        meta_ = await metadata.resolve(body.url)
+    except metadata.BlockedURL as e:
+        raise HTTPException(400, str(e))
     q = select(Listing).where(Listing.domain == meta_["domain"])
     if meta_["handle"]:
         q = q.where(Listing.handle == meta_["handle"])
@@ -401,8 +398,8 @@ async def verify_payment(body: VerifyIn, db: Session = Depends(get_db)):
 
 @app.post("/api/payments/mock/{order_id}")
 async def mock_capture(order_id: str, db: Session = Depends(get_db)):
-    """Local development only: simulates Razorpay capturing the order."""
-    if settings.payments_mode != "mock":
+    """Local development only: simulates Razorpay capturing the order. Disabled in production."""
+    if not settings.mock_payments_allowed:
         raise HTTPException(404)
     order = db.execute(select(Order).where(Order.provider_order_id == order_id)).scalar_one_or_none()
     if not order:
@@ -440,5 +437,11 @@ async def razorpay_webhook(request: Request, db: Session = Depends(get_db),
 
 
 @app.get("/api/health")
-def health():
-    return {"ok": True, "payments_mode": settings.payments_mode, "datafast": bool(settings.datafast_api_key)}
+def health(db: Session = Depends(get_db)):
+    try:
+        db.execute(text("SELECT 1"))
+        db_ok = True
+    except SQLAlchemyError:
+        db_ok = False
+    return {"ok": db_ok, "database": db_ok, "payments": settings.payments_mode,
+            "datafast": bool(settings.datafast_api_key), "env": "production" if settings.is_production else "development"}

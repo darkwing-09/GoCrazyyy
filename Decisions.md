@@ -19,8 +19,8 @@ Status accepted. A payment is either `main` or `deals`. Mixing them would let a 
 ## ADR-006 · Mock checkout when keys are absent
 Status accepted. Lets anyone run the full claim flow locally and in CI without Razorpay credentials. The dialog says it is a mock and the server refuses the mock endpoint when real keys exist.
 
-## ADR-007 · SQLite first, Postgres when needed
-Status accepted. Single-file DB with WAL is enough for launch; `DATABASE_URL` swaps it out.
+## ADR-007 · Postgres in production, SQLite locally
+Status accepted (revised 2026-11-17). Vercel has no persistent disk, so production uses Neon Postgres with a null pool; SQLite stays for local development and tests.
 
 ## ADR-008 · Site stats from DataFast, listing stats from our DB
 Status accepted. Visitors/revenue are site-level marketing numbers; clicks and totals are rank-critical and must not depend on a third party.
@@ -30,3 +30,24 @@ Status accepted. The user pinned near-black, switchable neon accent, light-based
 
 ## ADR-010 · Body face Schibsted Grotesk, mono Spline Sans Mono
 Status accepted. Geist was the first pick; the design detector flagged it as overused and the craft reference lists it. Bricolage Grotesque stays as the display voice.
+
+## ADR-011 · Vercel for frontend and API, one project
+Date 2026-11-17 · Status accepted. Static build plus a Python function behind rewrites keeps everything on one domain: no CORS, the webhook and click redirect share the brand domain, and one deploy ships both.
+
+## ADR-012 · Launch with an empty board
+Status accepted. No seeded listings or payments in production; the site shows honest empty states and hides stats until DataFast reports data. Business details are configuration, not copy.
+
+## ADR-013 · Sky-blue accent, dark theme only
+Status accepted. Replaces the five-accent picker (ADR-009's palette). One brand colour, `#38bdf8`, reads more like a product than a demo.
+
+## ADR-014 · Hero tubes background
+Status accepted. The threejs-components tubes cursor effect replaces the 2D point field, scoped to the first viewport, in brand colours, with click-to-cycle curated palettes instead of random colours.
+
+## ADR-015 · Founder contacts only on the listing page
+Status accepted. Email and phone are useful to buyers on a listing page but should not be harvestable from list endpoints.
+
+## ADR-016 · Dark theme only
+Date 2026-11-17 · Status accepted. The light theme and its toggle are removed; dark is the brand. Text tokens were raised (ink-2 #d4d4dc, ink-3 #a8a8b4) so nothing reads as hidden.
+
+## ADR-017 · Progressive claim form
+Status accepted. Required fields carry `*`. Optional startup details appear automatically once the required URL and category are filled, so the first view stays short and nothing is tucked behind a toggle.

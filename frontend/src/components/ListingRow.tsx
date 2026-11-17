@@ -83,8 +83,8 @@ export function ListingRow({
       className={clsx(
         'group relative flex items-start gap-3 rounded-2xl px-3.5 py-3.5 transition-[box-shadow,background-color,transform] duration-250 ease-out sm:gap-4 sm:px-4.5',
         top
-          ? 'bg-surface/90 backdrop-blur-xl hairline'
-          : 'bg-surface/50 backdrop-blur-md hairline hover:bg-surface/80'
+          ? 'bg-surface/95 backdrop-blur-xl hairline'
+          : 'bg-surface/95 backdrop-blur-md hairline hover:bg-raised'
       )}
     >
       {/* Dynamic Aceternity-style Spotlight specular highlight */}
@@ -110,7 +110,7 @@ export function ListingRow({
         <span
           className={clsx(
             'tnum font-mono text-[13.5px] font-bold transition-colors duration-200',
-            top ? 'text-accent' : 'text-ink-3 group-hover:text-ink-2'
+            top ? 'text-accent' : 'text-ink-2 group-hover:text-ink'
           )}
         >
           #{l.rank}
@@ -153,12 +153,12 @@ export function ListingRow({
         </div>
 
         {!compact && (
-          <p className="mt-0.5 line-clamp-1 text-[13px] text-ink-2">
+          <p className="mt-0.5 line-clamp-1 text-[13.5px] text-ink-2">
             {l.description || l.domain}
           </p>
         )}
 
-        <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[12px] text-ink-3">
+        <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[12.5px] font-medium text-ink-3">
           {l.deal_text && board === 'deals' && (
             <span className="rounded-md border border-accent/30 bg-accent-muted px-1.5 py-0.5 font-medium text-accent">
               {l.deal_text}
@@ -202,16 +202,16 @@ export function ListingRow({
             {l.domain}
           </a>
           <span>·</span>
-          <span className="tnum">{count(l.clicks)} clicks</span>
+          <span className="tnum">{count(l.clicks)} {l.clicks === 1 ? 'click' : 'clicks'}</span>
           <span>·</span>
-          <Link to={`/product/${l.slug}`} className="transition hover:text-ink">
+          <Link to={`/product/${l.slug}`} className="text-ink-2 transition hover:text-ink">
             details
           </Link>
 
           {onClaim && l.take_price_paise !== null && (
             <button
               onClick={() => onClaim(l)}
-              className="ml-auto hidden cursor-pointer rounded-full border border-accent/30 bg-accent-subtle px-2.5 py-1 text-[11.5px] font-medium text-accent transition hover:bg-accent hover:text-accent-ink hover:shadow-[var(--accent-glow)] sm:inline-flex"
+              className="ml-auto hidden cursor-pointer rounded-full border border-accent/30 bg-accent-subtle px-2.5 py-1 text-[12px] font-semibold text-accent transition hover:bg-accent hover:text-accent-ink hover:shadow-[var(--accent-glow)] sm:inline-flex"
             >
               claim for {rupees(l.take_price_paise)}
             </button>

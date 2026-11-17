@@ -16,7 +16,7 @@ export function BoardTabs({ active, category }: { active: Tab; category: string 
   return (
     <div className="mt-7 flex justify-center">
       <div
-        className="relative inline-flex items-center rounded-full bg-surface/80 p-1.5 backdrop-blur-xl hairline shadow-[0_10px_25px_-5px_rgba(0,0,0,0.3)]"
+        className="relative inline-flex items-center rounded-full bg-surface/95 p-1.5 backdrop-blur-xl hairline shadow-[0_10px_25px_-5px_rgba(0,0,0,0.3)]"
         role="tablist"
       >
         {tabs.map((t) => {

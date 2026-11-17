@@ -23,11 +23,14 @@ A public leaderboard where rank is bought. Pay ₹99 and you are listed. Pay mor
 | Listing data | Title, description, favicon auto-fetched; query strings stripped; shorteners resolved | Done |
 | Product page | Ranks overall/category/deals, outrank price Q&A, ledger, "also in category" | Done |
 | Categories page | Hottest 3 + grid of all 30 with top 3 | Done |
-| Stats | Online now, visitors today, total visitors, revenue from DataFast; listings count from DB | Done |
+| Stats | Online now, visitors today, total visitors, revenue from DataFast; listings count from DB; hidden until DataFast reports data | Done |
 | Clicks | `/out/{slug}` redirect with utm tag, counted per listing | Done |
 | Search | Header search across listings (Ctrl/⌘ K) | Done |
-| Policy pages | Rules, FAQ, Terms, Refunds, Privacy, Contact | Done (draft copy, lawyer review pending) |
-| Visual | Near-black, switchable neon accent, animated background, page transitions, reduced-motion safe | Done |
+| Policy pages | Rules, FAQ, Terms, Refunds, Privacy, Contact; business details from config | Done (have a lawyer review before launch) |
+| Visual | Near-black dark theme only, sky-blue accent, cursor-following 3D neon tubes in the hero, page transitions, reduced-motion safe | Done |
+
+| Startup details | Location, stage, X, LinkedIn, WhatsApp and email on the listing page | Done |
+| Hosting | Vercel (static + Python function), Neon Postgres | Ready |
 
 ## 5. Out of scope for v1
 Accounts/login, email digests, admin dashboard, OG image generation, multi-currency, GST invoices, comments or voting.

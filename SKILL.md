@@ -14,7 +14,7 @@ description: Work on the GoCrazy pay-to-rank leaderboard (FastAPI + React). Use 
 
 **Add a board** → add a window in `boards.board_window`, a `Literal` value in `/api/board`, a tab in `BoardTabs.tsx` and a route in `App.tsx`. Decide whether it reads `main` or `deals` payments.
 
-**Add a category** → append to `seed.CATEGORIES` (slug, name, lucide icon). Existing databases need an INSERT; there is no migration.
+**Add a category** → append to `seed.CATEGORIES` (slug, name, lucide icon) and add the icon to `CATEGORY_ICONS` in `frontend/src/components/Icon.tsx`. Existing databases pick it up on the next cold start (`seed_categories` inserts missing slugs).
 
 **Touch payments** → never bypass `ledger.record_capture`. Verify signatures on raw bytes. Run `test_api.py::test_webhook_rejects_bad_signature_and_accepts_good`.
 

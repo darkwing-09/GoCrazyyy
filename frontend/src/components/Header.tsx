@@ -4,7 +4,6 @@ import { AnimatePresence, motion } from 'motion/react'
 import { Search, X, Menu } from 'lucide-react'
 import clsx from 'clsx'
 import { Logo } from './Logo'
-import { PalettePicker } from './PalettePicker'
 import { useAppData } from '@/lib/app-data'
 import { api, type Listing } from '@/lib/api'
 import { count, rupees } from '@/lib/format'
@@ -21,7 +20,7 @@ export function Header() {
   const [searchOpen, setSearchOpen] = useState(false)
   const [menu, setMenu] = useState(false)
   return (
-    <header className="sticky top-0 z-30 border-b border-line bg-bg/70 backdrop-blur-xl">
+    <header className="sticky top-0 z-30 border-b border-line bg-bg/90 backdrop-blur-xl">
       <div className="mx-auto flex h-14 max-w-[1120px] items-center gap-3 px-4 sm:px-6">
         <Logo />
         <LiveStrip online={stats?.online ?? null} today={stats?.visitors_today ?? null} url={stats?.public_stats_url ?? null} />
@@ -36,7 +35,6 @@ export function Header() {
           <button onClick={() => setSearchOpen(true)} aria-label="Search listings" className="flex size-9 items-center justify-center rounded-full text-ink-2 transition hover:bg-accent-subtle hover:text-ink">
             <Search className="size-[18px]" strokeWidth={1.75} />
           </button>
-          <PalettePicker />
           <button onClick={() => setMenu(m => !m)} aria-label="Menu" aria-expanded={menu} className="flex size-9 items-center justify-center rounded-full text-ink-2 transition hover:bg-accent-subtle hover:text-ink md:hidden">
             {menu ? <X className="size-[18px]" /> : <Menu className="size-[18px]" />}
           </button>
@@ -46,7 +44,7 @@ export function Header() {
         {menu && (
           <motion.nav initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }} className="overflow-hidden border-t border-line md:hidden" aria-label="Primary mobile">
             <div className="flex flex-col px-4 py-2">
-              {nav.map(n => <NavLink key={n.to} to={n.to} onClick={() => setMenu(false)} className={({ isActive }) => clsx('rounded-lg px-3 py-2.5 text-[15px]', isActive ? 'text-accent' : 'text-ink-2')}>{n.label}</NavLink>)}
+              {nav.map(n => <NavLink key={n.to} to={n.to} onClick={() => setMenu(false)} className={({ isActive }) => clsx('rounded-lg px-3 py-2.5 text-[15px] font-medium', isActive ? 'text-accent' : 'text-ink-2')}>{n.label}</NavLink>)}
             </div>
           </motion.nav>
         )}
@@ -57,16 +55,17 @@ export function Header() {
 }
 
 function LiveStrip({ online, today, url }: { online: number | null; today: number | null; url: string | null }) {
-  const datafastUrl = url ?? 'https://datafa.st'
+  if (online === null && today === null) return null
   const Inner = (
-    <span className="hidden items-center gap-2 text-[12px] text-ink-3 sm:inline-flex">
+    <span className="hidden items-center gap-2 text-[12px] font-medium text-ink-3 sm:inline-flex">
       <span className="relative flex size-2"><span className="absolute inline-flex size-full animate-ping rounded-full bg-accent opacity-60" /><span className="relative inline-flex size-2 rounded-full bg-accent" /></span>
-      {online !== null ? <span className="text-ink-2">{count(online)} online</span> : <span className="text-ink-2">live</span>}
-      {today !== null && <><span>·</span><span>{count(today)} visitors today</span></>}
-      <span>·</span><span className="underline decoration-line underline-offset-4">stats →</span>
+      {online !== null && <span className="text-ink-2">{count(online)} online</span>}
+      {online !== null && today !== null && <span>·</span>}
+      {today !== null && <span>{count(today)} visitors today</span>}
+      {url && <><span>·</span><span className="underline decoration-line underline-offset-4">stats →</span></>}
     </span>
   )
-  return <a href={datafastUrl} target="_blank" rel="noreferrer" className="ml-2">{Inner}</a>
+  return url ? <a href={url} target="_blank" rel="noreferrer" className="ml-2">{Inner}</a> : <span className="ml-2">{Inner}</span>
 }
 
 function SearchOverlay({ open, onClose }: { open: boolean; onClose: () => void }) {
@@ -94,16 +93,16 @@ function SearchOverlay({ open, onClose }: { open: boolean; onClose: () => void }
             <div className="flex items-center gap-3 px-4">
               <Search className="size-4 text-ink-3" />
               <input ref={input} value={q} onChange={e => setQ(e.target.value)} placeholder="Search listings by name, domain or category" className="h-13 w-full bg-transparent text-[15px] outline-none placeholder:text-ink-3" />
-              <kbd className="rounded-md bg-line-strong px-1.5 py-0.5 font-mono text-[11px] text-ink-3">esc</kbd>
+              <kbd className="rounded-md bg-line-strong px-1.5 py-0.5 font-mono text-[11px] font-medium text-ink-2">esc</kbd>
             </div>
             {q.trim() && (
               <ul className="border-t border-line p-1.5">
-                {hits.length === 0 && <li className="px-3 py-6 text-center text-sm text-ink-3">{all === null ? 'Loading…' : `Nothing listed matches “${q}”. Be the first to claim it.`}</li>}
+                {hits.length === 0 && <li className="px-3 py-6 text-center text-sm font-medium text-ink-3">{all === null ? 'Loading…' : `Nothing listed matches “${q}”. Be the first to claim it.`}</li>}
                 {hits.map(l => (
                   <li key={l.slug}>
                     <button onClick={() => { onClose(); nav(`/product/${l.slug}`) }} className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition hover:bg-accent-subtle">
                       <img src={l.favicon ?? ''} alt="" className="size-7 rounded-lg bg-line-strong object-cover" />
-                      <span className="min-w-0 flex-1"><span className="block truncate text-sm">{l.title}</span><span className="block text-[12px] text-ink-3">#{l.rank} · {l.category.name}</span></span>
+                      <span className="min-w-0 flex-1"><span className="block truncate text-sm font-medium">{l.title}</span><span className="block text-[12px] font-medium text-ink-3">#{l.rank} · {l.category.name}</span></span>
                       <span className="tnum font-mono text-[13px] text-accent">{rupees(l.total_paise)}</span>
                     </button>
                   </li>
