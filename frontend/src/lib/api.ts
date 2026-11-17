@@ -27,7 +27,15 @@ export type Home = {
 }
 export type BoardPage = { board: Board; category: string | null; day: string | null; total: number; page: number; pages: number; items: Listing[]; take_top_paise: number; activity: Activity[] }
 export type Quote = { rank: number; min_paise: number; projected_total_paise: number; take_top_paise: number; existing: { slug: string; title: string; current_rank: number | null; total_paise: number } | null }
-export type Stats = { source: string; online: number | null; visitors_today: number | null; visitors_total: number | null; revenue_paise: number; revenue_source: string; products: number; public_stats_url: string | null }
+export type Stat = { name: string; visitors: number }
+export type Stats = {
+  source: string; online: number | null
+  visitors_today: number | null; pageviews_today: number | null
+  visitors_total: number | null; pageviews_total: number | null; sessions_total: number | null
+  avg_session_seconds: number | null; bounce_rate: number | null
+  top_countries: Stat[]; top_sources: Stat[]
+  revenue_paise: number; revenue_source: string; products: number; public_stats_url: string | null
+}
 export type CategoryCard = Category & { claims: number; last_claim_at: string | null; top: Listing[]; take_top_paise: number }
 export type Product = Listing & {
   overall: { rank: number | null; of: number; outrank_paise: number | null }

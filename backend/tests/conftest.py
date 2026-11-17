@@ -5,6 +5,8 @@ os.environ.update({
     "DATABASE_URL": os.getenv("TEST_DATABASE_URL", "sqlite:///./test_gocrazy.db"),
     "RAZORPAY_KEY_ID": "", "RAZORPAY_KEY_SECRET": "", "RAZORPAY_WEBHOOK_SECRET": "whsec_test",
     "DATAFAST_API_KEY": "",
+    # Tests run against local SQLite, never the production Turso database.
+    "TURSO_DATABASE_URL": "", "TURSO_AUTH_TOKEN": "", "LIBSQL_URL": "", "LIBSQL_AUTH_TOKEN": "",
 })
 os.environ.pop("VERCEL", None)
 os.environ.pop("VERCEL_ENV", None)

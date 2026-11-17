@@ -113,7 +113,7 @@ _cat_cache_time: float = 0.0
 def categories(response: Response, db: Session = Depends(get_db)):
     global _cat_cache, _cat_cache_time
     now = time.time()
-    response.headers["Cache-Control"] = "public, max-age=15, s-maxage=30, stale-while-revalidate=60"
+    response.headers["Cache-Control"] = "no-store"
     if _cat_cache is not None and (now - _cat_cache_time) < 30:
         return _cat_cache
 
@@ -194,12 +194,19 @@ def board(board: Literal["alltime", "today", "deals", "daily"] = "alltime", cate
 _home_cache: dict[str, tuple[dict, float]] = {}
 
 
+def _bust_caches() -> None:
+    """Clear the in-process read caches so a new payment shows on the board immediately."""
+    global _cat_cache
+    _cat_cache = None
+    _home_cache.clear()
+
+
 @app.get("/api/home")
 def home(response: Response, category: str | None = None, db: Session = Depends(get_db)):
     """Everything the home / category page needs in one round-trip."""
     global _home_cache
     now = time.time()
-    response.headers["Cache-Control"] = "public, max-age=10, s-maxage=15, stale-while-revalidate=30"
+    response.headers["Cache-Control"] = "no-store"
     ck = category or ""
     if ck in _home_cache and (now - _home_cache[ck][1]) < 15:
         return _home_cache[ck][0]
@@ -229,12 +236,9 @@ def quote(amount_paise: int = Query(..., ge=0), category: str | None = None,
     floor = pricing.MIN_NEW_DEAL if board == "deals" else pricing.MIN_NEW_LISTING
     existing = None
     if url:
-        clean, handle = metadata.normalise(url)
-        dom = metadata.domain_of(clean)
+        dom, _ = metadata.identity(url)
         existing = db.execute(select(Listing).where(Listing.domain == dom, Listing.published.is_(True))
                               .order_by(Listing.id)).scalars().first()
-        if existing and handle:
-            existing = db.execute(select(Listing).where(Listing.handle == handle)).scalar_one_or_none()
     cur = boards.find_row(rows, existing.id) if existing else None
     if cur:
         floor = pricing.MIN_RAISE
@@ -295,20 +299,29 @@ def daily(db: Session = Depends(get_db)):
 
 
 @app.get("/api/stats")
-async def stats(db: Session = Depends(get_db)):
-    """Header strip + footer strip. Traffic/revenue from DataFast, product count from our DB."""
+async def stats(response: Response, db: Session = Depends(get_db)):
+    """Live traffic from DataFast (online now, visitors, pageviews, top countries and sources);
+    listings and ₹ revenue from our own ledger, which is the source of truth for money."""
+    # Shared at the CDN for 30s so many serverless instances don't each hit DataFast's rate limit.
+    response.headers["Cache-Control"] = "public, max-age=30, s-maxage=30"
     today = datetime.now(boards.IST).date().isoformat()
-    online = await datafast.realtime_visitors()
-    today_ov = await datafast.overview(today, today)
-    all_ov = await datafast.overview()
+    snap = await datafast.snapshot(today)
     products = db.execute(select(func.count(Listing.id)).where(Listing.published.is_(True))).scalar()
     ledger = db.execute(select(func.coalesce(func.sum(Payment.amount_paise), 0))).scalar()
+    t, a = (snap or {}).get("today", {}), (snap or {}).get("all", {})
     return {
-        "source": "datafast" if all_ov is not None else "unconfigured",
-        "online": online, "visitors_today": (today_ov or {}).get("visitors"),
-        "visitors_total": (all_ov or {}).get("visitors"),
-        "revenue_paise": int(round(float(all_ov["revenue"]) * 100)) if all_ov and all_ov.get("revenue") is not None else int(ledger),
-        "revenue_source": "datafast" if all_ov and all_ov.get("revenue") is not None else "ledger",
+        "source": "datafast" if snap else "unconfigured",
+        "online": snap["online"] if snap else None,
+        "visitors_today": t.get("visitors") if snap else None,
+        "pageviews_today": t.get("pageviews") if snap else None,
+        "visitors_total": a.get("visitors") if snap else None,
+        "pageviews_total": a.get("pageviews") if snap else None,
+        "sessions_total": a.get("sessions") if snap else None,
+        "avg_session_seconds": a.get("avg_session_duration") if snap else None,
+        "bounce_rate": a.get("bounce_rate") if snap else None,
+        "top_countries": snap["countries"] if snap else [],
+        "top_sources": snap["sources"] if snap else [],
+        "revenue_paise": int(ledger), "revenue_source": "ledger",
         "products": int(products), "public_stats_url": settings.datafast_public_stats_url or None,
     }
 
@@ -449,6 +462,10 @@ def _after_capture(db: Session, pay: Payment, order: Order | None):
 
 
 async def _send_datafast(db: Session, pay: Payment, order: Order | None):
+    # Only real, live payments reach DataFast; local, test-mode and mock payments must never
+    # pollute the production revenue analytics.
+    if pay.source == "mock" or not settings.is_production or not settings.razorpay_key_id.startswith("rzp_live_"):
+        return
     args = _after_capture(db, pay, order)
     if args and await datafast.post_payment(**args):
         pay.datafast_sent = True
@@ -456,6 +473,7 @@ async def _send_datafast(db: Session, pay: Payment, order: Order | None):
 
 
 def _result(db: Session, pay: Payment) -> dict:
+    _bust_caches()
     l = db.get(Listing, pay.listing_id)
     rows = boards.ranked(db, "deals" if pay.board == "deals" else "alltime")
     r = boards.find_row(rows, l.id)
@@ -518,6 +536,7 @@ async def razorpay_webhook(request: Request, db: Session = Depends(get_db),
         except ValueError as e:
             log.error("webhook: %s", e)
             return {"ok": False, "reason": str(e)}
+        _bust_caches()
         order = db.execute(select(Order).where(Order.provider_order_id == p.get("order_id"))).scalar_one_or_none()
         await _send_datafast(db, pay, order)
     return {"ok": True}

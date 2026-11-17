@@ -1,11 +1,87 @@
-"""Resolve a URL or @handle to a listing title, description, favicon and domain."""
+"""Resolve a URL or @handle to a listing title, description, favicon and domain.
+
+Social profile links (Instagram, X, LinkedIn, …) resolve to the specific profile,
+not the platform: pasting instagram.com/<user> lists that person's page, with their
+handle as the title and a per-profile identity, so two profiles never collide and a
+listing never reads as a generic "Instagram".
+"""
 import ipaddress, re, socket
 from urllib.parse import urlparse, urlunparse
 import httpx
 from bs4 import BeautifulSoup
 
 UA = "Mozilla/5.0 (compatible; GoCrazyBot/1.0; +https://gocrazy.in)"
-HANDLE_RE = re.compile(r"^@?([A-Za-z0-9_]{1,30})$")
+HANDLE_RE = re.compile(r"^@?([A-Za-z0-9_.]{1,40})$")
+
+# host -> (platform name, unavatar provider or None, handle-style "@")
+SOCIAL: dict[str, tuple[str, str | None, bool]] = {
+    "instagram.com": ("Instagram", "instagram", True),
+    "twitter.com": ("X", "twitter", True),
+    "x.com": ("X", "twitter", True),
+    "tiktok.com": ("TikTok", "tiktok", True),
+    "threads.net": ("Threads", None, True),
+    "t.me": ("Telegram", "telegram", True),
+    "youtube.com": ("YouTube", "youtube", False),
+    "github.com": ("GitHub", "github", False),
+    "linkedin.com": ("LinkedIn", None, False),
+    "facebook.com": ("Facebook", None, False),
+    "fb.com": ("Facebook", None, False),
+    "pinterest.com": ("Pinterest", None, False),
+    "substack.com": ("Substack", None, False),
+}
+# First path segments that are app pages, not a profile/page username.
+_SKIP_FIRST: dict[str, set[str]] = {
+    "instagram.com": {"p", "reel", "reels", "explore", "tv", "stories", "accounts", "about"},
+    "youtube.com": {"watch", "results", "feed", "playlist", "shorts", "hashtag"},
+    "linkedin.com": {"feed", "jobs", "learning", "posts", "pulse", "help"},
+    "facebook.com": {"watch", "marketplace", "events", "groups", "gaming"},
+    "twitter.com": {"home", "search", "explore", "i", "messages", "notifications"},
+    "x.com": {"home", "search", "explore", "i", "messages", "notifications"},
+}
+
+
+def _host(netloc: str) -> str:
+    h = netloc.lower()
+    return h[4:] if h.startswith("www.") else h
+
+
+def _social_identity(url: str) -> dict | None:
+    """If `url` is a social profile/page link, build the listing from the profile itself.
+    These platforms serve generic login pages to scrapers, so we never fetch them."""
+    p = urlparse(url)
+    host = _host(p.netloc)
+    if host not in SOCIAL:
+        return None
+    segs = [s for s in p.path.split("/") if s]
+    if not segs:
+        return None  # bare platform domain: treat as a normal site
+    name, provider, at = SOCIAL[host]
+    first = segs[0].lower().lstrip("@")
+    if first in _SKIP_FIRST.get(host, set()):
+        return None
+    if host == "linkedin.com" and first in ("in", "company", "school", "showcase") and len(segs) > 1:
+        user = segs[1]
+    elif host == "youtube.com" and first in ("c", "channel", "user") and len(segs) > 1:
+        user = segs[1]
+    else:
+        user = segs[0]
+    user = user.lstrip("@").strip()
+    if not user:
+        return None
+    title = f"@{user}" if at else user
+    favicon = (
+        f"https://unavatar.io/{provider}/{user}"
+        if provider
+        else f"https://www.google.com/s2/favicons?domain={host}&sz=128"
+    )
+    return {
+        "url": url,
+        "handle": user,
+        "domain": f"{host}/{user.lower()}",  # per-profile identity, for dedup and display
+        "title": title[:200],
+        "description": f"{user} on {name}",
+        "favicon": favicon,
+    }
 
 
 def normalise(raw: str) -> tuple[str, str | None]:
@@ -17,14 +93,22 @@ def normalise(raw: str) -> tuple[str, str | None]:
     if not re.match(r"^https?://", raw, re.I):
         raw = "https://" + raw
     p = urlparse(raw)
-    # Strip query strings and fragments (outbid rule: no tracking params in listings).
+    # Strip query strings and fragments (no tracking params in listings).
     clean = urlunparse((p.scheme.lower(), p.netloc.lower(), p.path.rstrip("/") or "/", "", "", ""))
     return clean, None
 
 
 def domain_of(url: str) -> str:
-    host = urlparse(url).netloc.lower()
-    return host[4:] if host.startswith("www.") else host
+    return _host(urlparse(url).netloc)
+
+
+def identity(raw: str) -> tuple[str, str | None]:
+    """Dedup identity (domain, handle) with no network call; mirrors resolve()."""
+    url, handle = normalise(raw)
+    soc = _social_identity(url)
+    if soc:
+        return soc["domain"], soc["handle"]
+    return domain_of(url), handle
 
 
 class BlockedURL(ValueError):
@@ -47,12 +131,12 @@ def _assert_public(url: str) -> None:
 
 
 async def resolve(raw: str) -> dict:
-    url, handle = normalise(raw)
-    title, desc, icon, final = None, "", None, url
-    if handle:
-        return {"url": url, "handle": handle, "domain": "x.com", "title": f"@{handle}",
-                "description": f"@{handle} on X", "favicon": f"https://unavatar.io/x/{handle}"}
+    url, _ = normalise(raw)
+    soc = _social_identity(url)
+    if soc:
+        return soc  # social profile: use the profile itself, no fetch
     _assert_public(url)
+    title, desc, icon, final = None, "", None, url
 
     async def _guard(request: httpx.Request):
         _assert_public(str(request.url))  # every redirect hop is checked too

@@ -54,18 +54,25 @@ export function Header() {
   )
 }
 
+/** Live visitors from DataFast. Visible on every screen size; hidden until there is a real number. */
 function LiveStrip({ online, today, url }: { online: number | null; today: number | null; url: string | null }) {
-  if (online === null && today === null) return null
+  const on = online ?? 0
+  const td = today ?? 0
+  if (on <= 0 && td <= 0) return null
   const Inner = (
-    <span className="hidden items-center gap-2 text-[12px] font-medium text-ink-3 sm:inline-flex">
-      <span className="relative flex size-2"><span className="absolute inline-flex size-full animate-ping rounded-full bg-accent opacity-60" /><span className="relative inline-flex size-2 rounded-full bg-accent" /></span>
-      {online !== null && <span className="text-ink-2">{count(online)} online</span>}
-      {online !== null && today !== null && <span>·</span>}
-      {today !== null && <span>{count(today)} visitors today</span>}
-      {url && <><span>·</span><span className="underline decoration-line underline-offset-4">stats →</span></>}
+    <span className="inline-flex items-center gap-2 rounded-full bg-accent-subtle px-2.5 py-1 text-[12px] font-semibold text-ink-2 ring-1 ring-accent/25">
+      <span className="relative flex size-2" aria-hidden>
+        <span className="absolute inline-flex size-full animate-ping rounded-full bg-accent opacity-60" />
+        <span className="relative inline-flex size-2 rounded-full bg-accent" />
+      </span>
+      {on > 0 && <span className="tnum text-ink"><span className="text-accent">{count(on)}</span> online</span>}
+      {on > 0 && td > 0 && <span className="hidden text-ink-3 sm:inline" aria-hidden>·</span>}
+      {td > 0 && <span className={clsx('tnum', on > 0 && 'hidden sm:inline')}>{count(td)} {td === 1 ? 'visitor' : 'visitors'} today</span>}
     </span>
   )
-  return url ? <a href={url} target="_blank" rel="noreferrer" className="ml-2">{Inner}</a> : <span className="ml-2">{Inner}</span>
+  return url
+    ? <a href={url} target="_blank" rel="noreferrer" className="ml-1 sm:ml-2" aria-label="Live visitor stats">{Inner}</a>
+    : <span className="ml-1 sm:ml-2" aria-live="polite">{Inner}</span>
 }
 
 function SearchOverlay({ open, onClose }: { open: boolean; onClose: () => void }) {
