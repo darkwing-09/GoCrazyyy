@@ -1,8 +1,8 @@
-import json, logging, secrets
+import json, logging, secrets, time
 from datetime import date, datetime, timedelta, timezone
 from typing import Literal
 
-from fastapi import FastAPI, Depends, HTTPException, Request, Header, Query
+from fastapi import FastAPI, Depends, HTTPException, Request, Response, Header, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 from pydantic import BaseModel, Field
@@ -32,6 +32,12 @@ def init_db() -> None:
     """Runs once per cold start. Self-heals and logs errors without crashing."""
     global db_init_error
     try:
+        # Fast path: check if categories already exist (1 single roundtrip)
+        with SessionLocal() as db:
+            if db.execute(select(Category.id).limit(1)).scalar() is not None:
+                db_init_error = None
+                return
+        # First-time bootstrap only
         Base.metadata.create_all(engine)
         with SessionLocal() as db:
             seed_categories(db)
@@ -83,7 +89,8 @@ def activity_out(p: Payment) -> dict:
 # ---------- public reads ----------
 
 @app.get("/api/meta")
-def meta():
+def meta(response: Response):
+    response.headers["Cache-Control"] = "public, max-age=30, s-maxage=60, stale-while-revalidate=120"
     return {"payments_mode": settings.payments_mode, "payments_available": settings.payments_mode == "razorpay" or settings.mock_payments_allowed,
             "razorpay_key_id": settings.razorpay_key_id or None,
             "datafast_website_id": settings.datafast_website_id or None,
@@ -98,8 +105,18 @@ def meta():
             "launched_at": settings.launched_at or None, "deals_closes_at": settings.deals_closes_at or None}
 
 
+_cat_cache: dict | None = None
+_cat_cache_time: float = 0.0
+
+
 @app.get("/api/categories")
-def categories(db: Session = Depends(get_db)):
+def categories(response: Response, db: Session = Depends(get_db)):
+    global _cat_cache, _cat_cache_time
+    now = time.time()
+    response.headers["Cache-Control"] = "public, max-age=15, s-maxage=30, stale-while-revalidate=60"
+    if _cat_cache is not None and (now - _cat_cache_time) < 30:
+        return _cat_cache
+
     try:
         cats = db.execute(select(Category).order_by(Category.sort)).scalars().all()
     except Exception:
@@ -119,14 +136,23 @@ def categories(db: Session = Depends(get_db)):
         except Exception:
             pass
 
+    # Fast: 1 single query to Turso instead of 30 round-trips in a loop!
+    all_rows = boards.ranked(db, "alltime")
+    by_cat: dict[str, list[boards.Row]] = {}
+    for r in all_rows:
+        by_cat.setdefault(r.listing.category.slug, []).append(r)
+
     out = []
     for c in cats:
-        rows = boards.ranked(db, "alltime", c.slug)
+        rows = by_cat.get(c.slug, [])
         last = max((r.last_paid_at for r in rows if r.last_paid_at), default=None)
-        out.append({**cat_out(c), "claims": sum(1 for _ in rows), "last_claim_at": last.isoformat() if last else None,
+        out.append({**cat_out(c), "claims": len(rows), "last_claim_at": last.isoformat() if last else None,
                     "top": with_prices(rows[:3], "alltime"), "take_top_paise": pricing.price_for_rank(boards.totals_desc(rows), 1)})
     hot = sorted([c for c in out if c["last_claim_at"]], key=lambda c: c["last_claim_at"], reverse=True)[:3]
-    return {"categories": out, "hottest": [c["slug"] for c in hot]}
+    result = {"categories": out, "hottest": [c["slug"] for c in hot]}
+    _cat_cache = result
+    _cat_cache_time = now
+    return result
 
 
 @app.get("/api/debug-db")
@@ -165,13 +191,23 @@ def board(board: Literal["alltime", "today", "deals", "daily"] = "alltime", cate
             "activity": [activity_out(p) for p in boards.latest_activity(db, 10, category, pboard)]}
 
 
+_home_cache: dict[str, tuple[dict, float]] = {}
+
+
 @app.get("/api/home")
-def home(category: str | None = None, db: Session = Depends(get_db)):
+def home(response: Response, category: str | None = None, db: Session = Depends(get_db)):
     """Everything the home / category page needs in one round-trip."""
+    global _home_cache
+    now = time.time()
+    response.headers["Cache-Control"] = "public, max-age=10, s-maxage=15, stale-while-revalidate=30"
+    ck = category or ""
+    if ck in _home_cache and (now - _home_cache[ck][1]) < 15:
+        return _home_cache[ck][0]
+
     main = boards.ranked(db, "alltime", category)
     today = boards.ranked(db, "today", category)
     deals = boards.ranked(db, "deals", category)
-    return {
+    res = {
         "alltime": {"items": with_prices(main, "alltime")[:PAGE_SIZE], "total": len(main),
                     "pages": max(1, -(-len(main) // PAGE_SIZE)),
                     "take_top_paise": pricing.price_for_rank(boards.totals_desc(main), 1)},
@@ -180,6 +216,8 @@ def home(category: str | None = None, db: Session = Depends(get_db)):
                   "take_top_paise": pricing.price_for_rank(boards.totals_desc(deals), 1, "deals")},
         "activity": [activity_out(p) for p in boards.latest_activity(db, 10, category)],
     }
+    _home_cache[ck] = (res, now)
+    return res
 
 
 @app.get("/api/quote")
