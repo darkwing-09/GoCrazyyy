@@ -16,22 +16,61 @@ BASE = "https://datafa.st/api/v1"
 TZ = "Asia/Kolkata"
 _cache: dict[str, tuple[float, object]] = {}
 _resolved_site_id: str | None = None
+last_error: str | None = None  # non-secret, surfaced by /api/health for diagnosis
+
+
+def _clean(v: str) -> str:
+    """Env values pasted into dashboards often carry whitespace or wrapping quotes."""
+    return (v or "").strip().strip('"').strip("'").strip()
+
+
+def _key() -> str:
+    return _clean(settings.datafast_api_key)
+
+
+def _bare_domain(v: str) -> str:
+    v = _clean(v).lower()
+    for pre in ("https://", "http://"):
+        if v.startswith(pre):
+            v = v[len(pre):]
+    v = v.split("/")[0]
+    return v[4:] if v.startswith("www.") else v
 
 
 def enabled() -> bool:
-    return bool(settings.datafast_api_key)
+    return bool(_key())
+
+
+def key_kind() -> str | None:
+    k = _key()
+    return None if not k else "account token (dft_)" if k.startswith("dft_") else "website key (df_)" if k.startswith("df_") else "unrecognised"
 
 
 def _headers() -> dict:
-    return {"Authorization": f"Bearer {settings.datafast_api_key}"}
+    return {"Authorization": f"Bearer {_key()}", "User-Agent": "GoCrazy/1.0"}
+
+
+def _ok() -> None:
+    global last_error
+    last_error = None
+
+
+def _record(where: str, e: Exception) -> None:
+    global last_error
+    msg = str(e)
+    if isinstance(e, httpx.HTTPStatusError):
+        body = e.response.text[:200].replace(_key(), "***") if _key() else e.response.text[:200]
+        msg = f"HTTP {e.response.status_code}: {body}"
+    last_error = f"{where}: {msg}"[:300]
+    log.warning("datafast %s failed: %s", where, msg)
 
 
 async def _site_id(c: httpx.AsyncClient) -> str | None:
     """Internal website id for dft_ account tokens (None for df_ website keys)."""
     global _resolved_site_id
-    if not settings.datafast_api_key.startswith("dft_"):
+    if not _key().startswith("dft_"):
         return None
-    configured = settings.datafast_website_id.strip()
+    configured = _clean(settings.datafast_website_id)
     if configured and not configured.startswith("dfid_"):
         return configured
     if _resolved_site_id:
@@ -39,12 +78,14 @@ async def _site_id(c: httpx.AsyncClient) -> str | None:
     r = await c.get(f"{BASE}/admin/websites", headers=_headers())
     r.raise_for_status()
     sites = r.json().get("data") or []
-    domain = settings.datafast_domain.strip().lower()
+    domain = _bare_domain(settings.datafast_domain)
     match = (next((s for s in sites if configured and s.get("trackingId") == configured), None)
-             or next((s for s in sites if domain and (s.get("domain") or "").lower() == domain), None)
+             or next((s for s in sites if domain and _bare_domain(s.get("domain") or "") == domain), None)
              or (sites[0] if len(sites) == 1 else None))
     if not match:
-        raise RuntimeError("DataFast website not found; set DATAFAST_WEBSITE_ID or DATAFAST_DOMAIN")
+        names = ", ".join(_bare_domain(s.get("domain") or "?") for s in sites) or "none"
+        raise RuntimeError(f"website not matched (domain={domain or 'unset'}; account has: {names}). "
+                           "Set DATAFAST_WEBSITE_ID to the website's id or DATAFAST_DOMAIN to one of these.")
     _resolved_site_id = match["_id"]
     return _resolved_site_id
 
@@ -70,9 +111,10 @@ async def _get(path: str, params: dict | None = None, ttl: int | None = None, ro
             data = r.json().get("data") or []
             value = data if rows else (data[0] if data else {})
             _cache[key] = (time.time(), value)
+            _ok()
             return value
     except Exception as e:  # stats are decorative; never break the page over them
-        log.warning("datafast %s failed: %s", path, e)
+        _record(path, e)
         return hit[1] if hit else None
 
 
@@ -130,5 +172,5 @@ async def post_payment(*, amount_paise: int, transaction_id: str, visitor_id: st
             r.raise_for_status()
             return True
     except Exception as e:
-        log.warning("datafast payment post failed for %s: %s", transaction_id, e)
+        _record(f"payment {transaction_id}", e)
         return False

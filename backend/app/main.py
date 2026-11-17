@@ -548,4 +548,6 @@ def health(db: Session = Depends(get_db)):
     except SQLAlchemyError:
         db_ok = False
     return {"ok": db_ok, "database": db_ok, "payments": settings.payments_mode,
-            "datafast": bool(settings.datafast_api_key), "env": "production" if settings.is_production else "development"}
+            "datafast": datafast.enabled(), "datafast_key": datafast.key_kind(),
+            "datafast_error": datafast.last_error,
+            "env": "production" if settings.is_production else "development"}
