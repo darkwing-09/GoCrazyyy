@@ -128,6 +128,7 @@ The app deploys to [Vercel](https://vercel.com) as a single project. Connect a P
 ## Contributing
 
 Contributions are welcome. Please read [CONTRIBUTING.md](CONTRIBUTING.md) for the development workflow, coding conventions, and how to open a pull request. By participating you agree to the [Code of Conduct](CODE_OF_CONDUCT.md).
+@athrv @varun
 
 ## License
 
