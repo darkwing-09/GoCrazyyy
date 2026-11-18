@@ -23,7 +23,7 @@ export function Header() {
     <header className="sticky top-0 z-30 border-b border-line bg-bg/90 backdrop-blur-xl">
       <div className="mx-auto flex h-14 max-w-[1120px] items-center gap-3 px-4 sm:px-6">
         <Logo />
-        <LiveStrip online={stats?.online ?? null} today={stats?.visitors_today ?? null} url={stats?.public_stats_url ?? null} />
+        {stats?.source === 'datafast' && <LiveStrip online={stats.online} url={stats.public_stats_url} />}
         <nav className="ml-auto hidden items-center gap-1 md:flex" aria-label="Primary">
           {nav.map(n => (
             <NavLink key={n.to} to={n.to} className={({ isActive }) => clsx('rounded-full px-3 py-1.5 text-[13.5px] font-medium transition', isActive ? 'beam text-ink' : 'text-ink-2 hover:text-ink')}>
@@ -55,19 +55,17 @@ export function Header() {
 }
 
 /** Live visitors from DataFast. Visible on every screen size; hidden until there is a real number. */
-function LiveStrip({ online, today, url }: { online: number | null; today: number | null; url: string | null }) {
-  const on = online ?? 0
-  const td = today ?? 0
-  if (on <= 0 && td <= 0) return null
+/** Live "N online" from DataFast. The person reading it is online too, so it never reads 0
+ *  (DataFast's realtime count lags a few seconds behind a fresh visit). */
+function LiveStrip({ online, url }: { online: number | null; url: string | null }) {
+  const on = Math.max(1, online ?? 0)
   const Inner = (
     <span className="inline-flex items-center gap-2 rounded-full bg-emerald-500/10 px-2.5 py-1 text-[12px] font-semibold text-ink-2 ring-1 ring-emerald-400/30">
       <span className="relative flex size-2" aria-hidden>
         <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-75" />
         <span className="relative inline-flex size-2 rounded-full bg-emerald-400 shadow-[0_0_6px_#34d399]" />
       </span>
-      {on > 0 && <span className="tnum animate-pulse text-emerald-400">{count(on)} online</span>}
-      {on > 0 && td > 0 && <span className="hidden text-ink-3 sm:inline" aria-hidden>·</span>}
-      {td > 0 && <span className={clsx('tnum', on > 0 && 'hidden sm:inline')}>{count(td)} {td === 1 ? 'visitor' : 'visitors'} today</span>}
+      <span className="tnum animate-pulse text-emerald-400">{count(on)} online</span>
     </span>
   )
   return url

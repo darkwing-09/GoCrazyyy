@@ -13,7 +13,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     api.meta().then(setMeta).catch(() => {})
     api.categories().then(r => setCats(r.categories.map(({ slug, name, icon }) => ({ slug, name, icon })))).catch(() => {})
     refreshStats()
-    const id = setInterval(refreshStats, 60_000)
+    const id = setInterval(refreshStats, 30_000)
     return () => clearInterval(id)
   }, [])
   return <C.Provider value={{ meta, categories, stats, refreshStats }}>{children}</C.Provider>
