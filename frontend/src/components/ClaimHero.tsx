@@ -148,7 +148,9 @@ export const ClaimHero = forwardRef<ClaimHeroHandle, Props>(function ClaimHero(
         linkedin: linkedin.trim() || null,
         contact_phone: contactPhone.trim() || null,
       })
-      if (claim.mode === 'razorpay' && claim.key_id) {
+      if (claim.mode === 'upi_gateway') {
+        setCheckout({ kind: 'upi', claim })
+      } else if (claim.mode === 'razorpay' && claim.key_id) {
         setCheckout({ kind: 'waiting', claim })
         await openCheckout({
           keyId: claim.key_id,
@@ -486,7 +488,15 @@ export const ClaimHero = forwardRef<ClaimHeroHandle, Props>(function ClaimHero(
         </Button>
       </form>
 
-      <CheckoutDialog state={checkout} onClose={() => setCheckout(null)} onMockPay={mockPay} />
+      <CheckoutDialog
+        state={checkout}
+        onClose={() => setCheckout(null)}
+        onMockPay={mockPay}
+        onUpiPaid={(result, claim) => {
+          setCheckout({ kind: 'done', claim, result })
+          onPaid()
+        }}
+      />
     </section>
   )
 })

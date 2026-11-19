@@ -14,7 +14,8 @@ export type Listing = {
 export type Activity = { slug: string; title: string; favicon: string | null; amount_paise: number; at: string; board: string; category: Category }
 export type Board = 'alltime' | 'today' | 'deals' | 'daily'
 export type Meta = {
-  payments_mode: 'razorpay' | 'mock'; payments_available: boolean; razorpay_key_id: string | null; datafast_website_id: string | null
+  payments_mode: 'razorpay' | 'upi_gateway' | 'mock'; payments_available: boolean; razorpay_key_id: string | null; datafast_website_id: string | null
+  upi_gateway_enabled?: boolean
   datafast_domain: string | null; public_stats_url: string | null; launched_at: string | null; deals_closes_at: string | null
   business: { name: string; email: string | null; address: string | null; jurisdiction: string | null }
   pricing: { min_new: number; take_top_bump: number; rank_bump: number; min_raise: number; step: number; max: number; min_new_deal: number; take_top_bump_deal: number }
@@ -44,9 +45,11 @@ export type Product = Listing & {
 }
 export type Day = { day: string; live: boolean; count: number; revenue_paise: number; top: Listing[] }
 export type ClaimResult = {
-  order_id: string; amount_paise: number; currency: string; key_id: string | null; mode: 'razorpay' | 'mock'
+  order_id: string; amount_paise: number; currency: string; key_id: string | null; mode: 'razorpay' | 'upi_gateway' | 'mock'
   listing: { slug: string; title: string; favicon: string | null; domain: string; is_new: boolean }
   projected_rank: number; projected_total_paise: number
+  payment_url?: string | null
+  upi_intent?: string | null
 }
 export type PayResult = { ok: boolean; slug: string; title: string; rank: number | null; total_paise: number; board: string; of: number }
 
@@ -83,5 +86,6 @@ export const api = {
   daily: () => req<{ days: Day[]; resets_at?: string }>('/api/daily'),
   claim: (body: object) => req<ClaimResult>('/api/claims', { method: 'POST', body: JSON.stringify(body) }),
   verify: (body: object) => req<PayResult>('/api/payments/verify', { method: 'POST', body: JSON.stringify(body) }),
+  checkStatus: (orderId: string) => req<PayResult & { paid: boolean; status: string }>(`/api/payments/status/${encodeURIComponent(orderId)}`),
   mockPay: (orderId: string) => req<PayResult>(`/api/payments/mock/${orderId}`, { method: 'POST' }),
 }

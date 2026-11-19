@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session, selectinload
 from .config import get_settings
 from .db import Base, engine, get_db, SessionLocal
 from .models import Category, Listing, Order, Payment, Click, WebhookEvent
-from . import boards, pricing, metadata, razorpay_client as rzp, datafast
+from . import boards, pricing, metadata, razorpay_client as rzp, upi_client as upi, datafast
 from .ledger import record_capture
 from .seed import seed_categories
 
@@ -91,8 +91,10 @@ def activity_out(p: Payment) -> dict:
 @app.get("/api/meta")
 def meta(response: Response):
     response.headers["Cache-Control"] = "public, max-age=30, s-maxage=60, stale-while-revalidate=120"
-    return {"payments_mode": settings.payments_mode, "payments_available": settings.payments_mode == "razorpay" or settings.mock_payments_allowed,
+    return {"payments_mode": settings.payments_mode,
+            "payments_available": settings.payments_mode in ("razorpay", "upi_gateway") or settings.mock_payments_allowed,
             "razorpay_key_id": settings.razorpay_key_id or None,
+            "upi_gateway_enabled": settings.payments_mode == "upi_gateway",
             "datafast_website_id": settings.datafast_website_id or None,
             "datafast_domain": settings.datafast_domain or None,
             "public_stats_url": settings.datafast_public_stats_url or None,
@@ -367,8 +369,8 @@ class ClaimIn(BaseModel):
 
 @app.post("/api/claims")
 async def create_claim(body: ClaimIn, db: Session = Depends(get_db)):
-    if settings.payments_mode != "razorpay" and not settings.mock_payments_allowed:
-        log.error("claim refused: Razorpay keys are not configured in production")
+    if settings.payments_mode not in ("razorpay", "upi_gateway") and not settings.mock_payments_allowed:
+        log.error("claim refused: no payment gateway is configured in production")
         raise HTTPException(503, "Payments are temporarily unavailable. Please try again shortly.")
     if not body.accept_terms:
         raise HTTPException(400, "You must accept the Terms to claim a rank.")
@@ -428,16 +430,40 @@ async def create_claim(body: ClaimIn, db: Session = Depends(get_db)):
         )
         db.add(listing_)
         db.flush()
+
+    client_order_id = f"gc_{listing_.id}_{secrets.token_hex(4)}"
     notes = {"listing_id": str(listing_.id), "slug": listing_.slug, "board": body.board,
              "df_vid": body.df_visitor_id or ""}
-    order = rzp.create_order(body.amount_paise, f"gc_{listing_.id}_{secrets.token_hex(4)}", notes)
-    db.add(Order(provider_order_id=order["id"], listing_id=listing_.id, amount_paise=body.amount_paise,
+    payment_url: str | None = None
+    upi_intent: str | None = None
+
+    if settings.payments_mode == "upi_gateway":
+        upi_res = upi.create_order(
+            amount_paise=body.amount_paise,
+            client_order_id=client_order_id,
+            email=body.email or "",
+            mobile=body.contact_phone or "",
+            note=f"GoCrazy rank claim - {listing_.domain}",
+        )
+        provider_order_id = upi_res["id"]
+        payment_url = upi_res.get("payment_url")
+        upi_intent = upi_res.get("upi_intent")
+    elif settings.payments_mode == "razorpay":
+        order = rzp.create_order(body.amount_paise, client_order_id, notes)
+        provider_order_id = order["id"]
+    else:  # mock mode
+        provider_order_id = f"order_mock_{secrets.token_hex(7)}"
+        upi_intent = f"upi://pay?pa=mock@upi&pn=GoCrazy&am={body.amount_paise/100:.2f}&tr={provider_order_id}"
+
+    db.add(Order(provider_order_id=provider_order_id, listing_id=listing_.id, amount_paise=body.amount_paise,
                  board=body.board, df_visitor_id=body.df_visitor_id, email=body.email))
     db.commit()
     projected = (cur.total_paise if cur else 0) + body.amount_paise
     others = [t for r, t in zip(rows, boards.totals_desc(rows)) if not existing or r.listing.id != existing.id]
-    return {"order_id": order["id"], "amount_paise": body.amount_paise, "currency": "INR",
-            "key_id": settings.razorpay_key_id or None, "mode": settings.payments_mode,
+    return {"order_id": provider_order_id, "amount_paise": body.amount_paise, "currency": "INR",
+            "key_id": settings.razorpay_key_id if settings.payments_mode == "razorpay" else None,
+            "mode": settings.payments_mode,
+            "payment_url": payment_url, "upi_intent": upi_intent,
             "listing": {"slug": listing_.slug, "title": listing_.title, "favicon": listing_.favicon,
                         "domain": listing_.domain, "is_new": existing is None},
             "projected_rank": pricing.rank_for_amount(others, projected), "projected_total_paise": projected}
@@ -462,7 +488,9 @@ def _after_capture(db: Session, pay: Payment, order: Order | None):
 async def _send_datafast(db: Session, pay: Payment, order: Order | None):
     # Only real, live payments reach DataFast; local, test-mode and mock payments must never
     # pollute the production revenue analytics.
-    if pay.source == "mock" or not settings.is_production or not settings.razorpay_key_id.startswith("rzp_live_"):
+    if pay.source == "mock" or not settings.is_production:
+        return
+    if settings.payments_mode == "razorpay" and not settings.razorpay_key_id.startswith("rzp_live_"):
         return
     args = _after_capture(db, pay, order)
     if args and await datafast.post_payment(**args):
@@ -499,9 +527,39 @@ async def verify_payment(body: VerifyIn, db: Session = Depends(get_db)):
     return _result(db, pay)
 
 
+@app.get("/api/payments/status/{order_id}")
+async def check_payment_status(order_id: str, db: Session = Depends(get_db)):
+    """Polls payment status for an order. If paid, records capture and returns the result."""
+    order = db.execute(select(Order).where(Order.provider_order_id == order_id)).scalar_one_or_none()
+    if not order:
+        raise HTTPException(404, "unknown order")
+
+    # Check if already captured in ledger
+    existing = db.execute(select(Payment).where(Payment.provider_order_id == order_id)).scalar_one_or_none()
+    if existing:
+        res = _result(db, existing)
+        return {"paid": True, "status": "paid", **res}
+
+    if settings.payments_mode == "upi_gateway":
+        data = upi.fetch_order(order_id)
+        if data and data.get("status") == "paid":
+            amount = int(round(float(data.get("amount", 0)) * 100))
+            if not amount:
+                amount = order.amount_paise
+            pay_id = data.get("utr") or f"upi_{order_id}"
+            pay, created = record_capture(db, payment_id=pay_id, order_id=order_id,
+                                          amount_paise=amount, method="upi", source="poll")
+            await _send_datafast(db, pay, order)
+            res = _result(db, pay)
+            return {"paid": True, "status": "paid", **res}
+        return {"paid": False, "status": (data.get("status") if data else "pending") or "pending"}
+
+    return {"paid": False, "status": order.status}
+
+
 @app.post("/api/payments/mock/{order_id}")
 async def mock_capture(order_id: str, db: Session = Depends(get_db)):
-    """Local development only: simulates Razorpay capturing the order. Disabled in production."""
+    """Local development only: simulates capturing the order. Disabled in production."""
     if not settings.mock_payments_allowed:
         raise HTTPException(404)
     order = db.execute(select(Order).where(Order.provider_order_id == order_id)).scalar_one_or_none()
@@ -511,6 +569,42 @@ async def mock_capture(order_id: str, db: Session = Depends(get_db)):
                             amount_paise=order.amount_paise, method="mock", source="mock")
     await _send_datafast(db, pay, order)
     return _result(db, pay)
+
+
+@app.post("/webhooks/upi")
+async def upi_gateway_webhook(request: Request, db: Session = Depends(get_db),
+                              x_signature: str = Header(default=""),
+                              x_event_id: str = Header(default="")):
+    raw = await request.body()
+    if not upi.verify_webhook_signature(raw, x_signature):
+        raise HTTPException(400, "bad signature")
+    evt = json.loads(raw)
+    event_id = x_event_id or evt.get("event_id") or f"{evt.get('event')}:{secrets.token_hex(4)}"
+    if db.execute(select(WebhookEvent).where(WebhookEvent.event_id == event_id)).scalar_one_or_none():
+        return {"ok": True, "duplicate": True}
+    db.add(WebhookEvent(event_id=event_id, event=evt.get("event", ""), payload=evt))
+    db.commit()
+
+    if evt.get("event") == "order.paid":
+        data = evt.get("data", {})
+        order_no = data.get("order_id") or data.get("client_order_id")
+        order = db.execute(select(Order).where(
+            (Order.provider_order_id == order_no) | (Order.provider_order_id == data.get("order_id"))
+        )).scalar_one_or_none()
+        amount_paise = int(round(float(data.get("amount", 0)) * 100)) if data.get("amount") else (order.amount_paise if order else 0)
+        pay_id = data.get("utr") or f"upi_{order_no}_{secrets.token_hex(4)}"
+
+        if order and amount_paise:
+            try:
+                pay, created = record_capture(db, payment_id=pay_id, order_id=order.provider_order_id,
+                                              amount_paise=amount_paise, method="upi", source="webhook")
+                _bust_caches()
+                await _send_datafast(db, pay, order)
+            except ValueError as e:
+                log.error("upi webhook error: %s", e)
+                return {"ok": False, "reason": str(e)}
+
+    return {"ok": True}
 
 
 @app.post("/webhooks/razorpay")

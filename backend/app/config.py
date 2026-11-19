@@ -30,6 +30,13 @@ class Settings(BaseSettings):
     razorpay_key_secret: str = ""
     razorpay_webhook_secret: str = ""
 
+    # Self-hosted UPI Gateway (https://github.com/mynkdev-21/upi-gateway)
+    upi_gateway_url: str = ""
+    upi_gateway_key: str = ""
+    upi_gateway_secret: str = ""
+    upi_gateway_webhook_secret: str = ""
+    payment_provider: str = ""  # "upi" | "razorpay" | "mock"
+
     # Server-side only; never shipped to the browser.
     datafast_api_key: str = ""
     datafast_website_id: str = ""
@@ -47,7 +54,15 @@ class Settings(BaseSettings):
 
     @property
     def payments_mode(self) -> str:
-        return "razorpay" if self.razorpay_key_id and self.razorpay_key_secret else "mock"
+        if self.payment_provider == "upi" and self.upi_gateway_url and self.upi_gateway_key:
+            return "upi_gateway"
+        if self.payment_provider == "razorpay" and self.razorpay_key_id and self.razorpay_key_secret:
+            return "razorpay"
+        if self.upi_gateway_url and self.upi_gateway_key and self.upi_gateway_secret:
+            return "upi_gateway"
+        if self.razorpay_key_id and self.razorpay_key_secret:
+            return "razorpay"
+        return "mock"
 
     @property
     def mock_payments_allowed(self) -> bool:
